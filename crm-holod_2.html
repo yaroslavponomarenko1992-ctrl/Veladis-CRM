@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ХолодСервис — Veladis CRM</title>
+<style>
+  :root {
+    --ice: #E8F4F8; --deep: #0D2B3E; --steel: #2C5F7A; --frost: #A8D5E8;
+    --coral: #E85C3A; --amber: #F0A500; --green: #2A9D5C;
+    --surface: #F0F7FB; --border: #C8E0EC; --text: #0D2B3E; --muted: #5A7D8E; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--deep); color: var(--white); padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(13,43,62,0.3);
+  }
+  .logo { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .logo span { color: var(--frost); }
+  .header-stats { display: flex; gap: 14px; font-size: 12px; color: var(--frost); }
+  .header-stats strong { color: var(--white); }
+
+  .container { max-width: 920px; margin: 0 auto; padding: 16px; }
+
+  .tabs { display: flex; gap: 3px; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+  .tab { flex: 1; padding: 9px 4px; border: none; background: transparent; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; text-align: center; }
+  .tab.active { background: var(--deep); color: var(--white); }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--deep); margin-bottom: 14px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width:500px){ .form-grid { grid-template-columns: 1fr; } }
+  .form-full { grid-column: 1/-1; }
+
+  label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+  input, select, textarea { width: 100%; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--surface); transition: border-color 0.15s; font-family: inherit; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--steel); background: var(--white); }
+  textarea { resize: vertical; min-height: 72px; }
+
+  .btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+  .btn-primary { background: var(--steel); color: var(--white); }
+  .btn-primary:hover { background: var(--deep); }
+  .btn-danger { background: transparent; color: var(--coral); border: 1.5px solid var(--coral); padding: 6px 11px; font-size: 12px; }
+  .btn-danger:hover { background: var(--coral); color: var(--white); }
+  .btn-sm { padding: 6px 11px; font-size: 12px; }
+  .btn-success { background: var(--green); color: var(--white); }
+
+  .ticket { background: var(--white); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+  .ticket:hover { border-color: var(--steel); box-shadow: 0 2px 8px rgba(44,95,122,0.1); }
+  .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .ticket-id { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .ticket-title { font-size: 14px; font-weight: 700; color: var(--deep); margin: 3px 0; }
+  .ticket-meta { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .badge-new { background: #E3F0FF; color: #1A5CB0; }
+  .badge-progress { background: #FFF3DC; color: #A06C00; }
+  .badge-done { background: #DCF5E9; color: #1A6B3A; }
+
+  .priority-high { border-left: 3px solid var(--coral); }
+  .priority-medium { border-left: 3px solid var(--amber); }
+  .priority-low { border-left: 3px solid var(--green); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(13,43,62,0.55); z-index: 200; padding: 16px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+  .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 580px; margin: auto; overflow: hidden; }
+  .modal-head { background: var(--deep); color: var(--white); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-head h3 { font-size: 15px; }
+  .modal-close { background: none; border: none; color: var(--frost); font-size: 22px; cursor: pointer; line-height: 1; }
+  .modal-body { padding: 18px; max-height: 80vh; overflow-y: auto; }
+
+  .history-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .history-item:last-child { border-bottom: none; }
+  .history-date { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+
+  .part-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 11px; background: var(--surface); border-radius: 8px; margin-bottom: 5px; font-size: 13px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  @media(max-width:400px){ .stats-grid { grid-template-columns: 1fr 1fr; } }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-number { font-size: 26px; font-weight: 800; color: var(--steel); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-btn { padding: 5px 13px; border: 1.5px solid var(--border); border-radius: 20px; background: var(--white); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { border-color: var(--steel); background: var(--steel); color: var(--white); }
+
+  .empty { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 14px; }
+  .empty-icon { font-size: 38px; margin-bottom: 8px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .add-part-row { display: flex; gap: 7px; margin-top: 7px; }
+  .add-part-row input { flex: 1; }
+
+  /* EQUIPMENT TAB */
+  .shop-block { margin-bottom: 18px; }
+  .shop-header { background: var(--deep); color: var(--white); border-radius: 10px 10px 0 0; padding: 12px 16px; }
+  .shop-header h3 { font-size: 14px; font-weight: 700; }
+  .shop-header p { font-size: 12px; color: var(--frost); margin-top: 2px; }
+  .equip-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; font-size: 12px; }
+  .equip-table th { background: var(--surface); padding: 8px 10px; text-align: left; font-weight: 700; color: var(--muted); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .equip-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .equip-table tr:last-child td { border-bottom: none; }
+  .equip-table tr:hover td { background: var(--surface); }
+  .inv-badge { display: inline-block; background: var(--ice); color: var(--steel); border-radius: 5px; padding: 1px 7px; font-size: 11px; font-weight: 700; font-family: monospace; }
+  .type-cold { color: #1A5CB0; font-weight: 600; font-size: 11px; }
+  .type-freeze { color: #B02F10; font-weight: 600; font-size: 11px; }
+  .type-other { color: #555; font-size: 11px; }
+
+  .search-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .search-bar input { flex: 1; }
+
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+  .bar-track { background: var(--surface); border-radius: 6px; height: 8px; }
+  .bar-fill { height: 8px; border-radius: 6px; transition: width 0.3s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🧊 <span>Veladis</span> Сервіс</div>
+  <div class="header-stats">
+    <span><strong id="h-open">0</strong> відкритих</span>
+    <span><strong id="h-today">0</strong> сьогодні</span>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('list')">📋 Заявки</button>
+    <button class="tab" onclick="switchTab('new')">➕ Нова</button>
+    <button class="tab" onclick="switchTab('equip')">⚙️ Обладнання</button>
+    <button class="tab" onclick="switchTab('stats')">📊 Статистика</button>
+  </div>
+
+  <!-- LIST -->
+  <div id="tab-list" class="section active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="filters" style="margin-bottom:0">
+        <button class="filter-btn active" onclick="setFilter('all',this)">Всі</button>
+        <button class="filter-btn" onclick="setFilter('new',this)">Нові</button>
+        <button class="filter-btn" onclick="setFilter('progress',this)">В роботі</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">Завершені</button>
+      </div>
+      <button id="sync-btn" class="btn btn-sm" onclick="manualSync()" style="background:var(--deep);color:var(--white);white-space:nowrap">☁️ Синхронізувати</button>
+    </div>
+    <div id="tickets-list"></div>
+  </div>
+
+  <!-- NEW -->
+  <div id="tab-new" class="section">
+    <div class="card">
+      <div class="card-title">🔧 Нова заявка</div>
+      <div class="form-grid">
+        <div>
+          <label>Магазин</label>
+          <select id="f-shop" onchange="loadEquipForShop()">
+            <option value="">Оберіть магазин</option>
+            <option value="0">Бажана 16Д, Київ</option>
+            <option value="1">Малишка 4Д, Київ</option>
+            <option value="2">Стуса 52, Вишневе</option>
+            <option value="3">Березнева 12, Київ</option>
+            <option value="4">Бірюкова 2А, Буча</option>
+            <option value="5">Нижній Вал 11, Київ</option>
+          </select>
+        </div>
+        <div>
+          <label>Обладнання</label>
+          <select id="f-equip">
+            <option value="">Спочатку оберіть магазин</option>
+          </select>
+        </div>
+        <div>
+          <label>Тип несправності</label>
+          <select id="f-type">
+            <option value="">Оберіть тип</option>
+            <option>Не тримає температуру</option>
+            <option>Витік холодоагенту</option>
+            <option>Компресор не запускається</option>
+            <option>Шум / вібрація</option>
+            <option>Обмерзання випарника</option>
+            <option>Несправність ТЕНу</option>
+            <option>Погана циркуляція повітря</option>
+            <option>Планове ТО</option>
+            <option>Інше</option>
+          </select>
+        </div>
+        <div>
+          <label>Пріоритет</label>
+          <select id="f-priority">
+            <option value="high">🔴 Високий</option>
+            <option value="medium" selected>🟡 Середній</option>
+            <option value="low">🟢 Низький</option>
+          </select>
+        </div>
+        <div class="form-full">
+          <label>Опис проблеми</label>
+          <textarea id="f-desc" placeholder="Опишіть симптоми, температуру, дату останнього ТО..."></textarea>
+        </div>
+        <div>
+          <label>Дата заявки</label>
+          <input type="date" id="f-date">
+        </div>
+        <div>
+          <label>Контакт магазину</label>
+          <input type="text" id="f-contact" placeholder="Ім'я, телефон">
+        </div>
+      </div>
+      <hr class="divider">
+      <button class="btn btn-primary" onclick="createTicket()">✅ Створити заявку</button>
+    </div>
+  </div>
+
+  <!-- EQUIPMENT -->
+  <div id="tab-equip" class="section">
+    <div class="search-bar">
+      <input type="text" id="equip-search" placeholder="🔍 Пошук за назвою або інв. номером..." oninput="renderEquip()">
+    </div>
+    <div id="equip-list"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats" class="section">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-number" id="s-total">0</div><div class="stat-label">Всього заявок</div></div>
+      <div class="stat-card"><div class="stat-number" id="s-open">0</div><div class="stat-label">Відкритих</div></div>
+      <div class="stat-card"><div class="stat-number" id="s-done">0</div><div class="stat-label">Завершено</div></div>
+    </div>
+    <div class="card"><div class="card-title">🏪 По магазинах</div><div id="stat-shops"></div></div>
+    <div class="card"><div class="card-title">🔧 По типу несправності</div><div id="stat-types"></div></div>
+
+    <!-- BACKUP -->
+    <div class="card">
+      <div class="card-title">💾 Резервна копія</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+        Збережіть дані у файл — щоб не втратити при очищенні браузера або перенести на інший пристрій.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="exportData()">⬇️ Зберегти копію (.json)</button>
+        <label class="btn" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);cursor:pointer">
+          ⬆️ Завантажити копію
+          <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+        </label>
+      </div>
+      <div id="backup-msg" style="margin-top:10px;font-size:13px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modal-title">Заявка</h3><button class="modal-close" onclick="closeModalDirect()">×</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ── SHOP & EQUIPMENT DATA ──────────────────────────────────────────────
+const SHOPS = [
+  { name: 'Veladis — Бажана 16Д', address: 'м. Київ, просп. Миколи Бажана 16Д', price: '12 400 грн/ТО' },
+  { name: 'Veladis — Малишка 4Д', address: 'м. Київ, вул. Андрія Малишка 4Д', price: '8 400 грн/ТО' },
+  { name: 'Veladis — Стуса 52', address: 'м. Вишневе, вул. Василя Стуса 52', price: '8 500 грн/ТО' },
+  { name: 'Veladis — Березнева 12', address: 'м. Київ, вул. Березнева 12', price: '5 600 грн/ТО' },
+  { name: 'Veladis — Бірюкова 2А', address: 'м. Буча, бульв. Леоніда Бірюкова 2А', price: '8 500 грн/ТО' },
+  { name: 'Veladis — Нижній Вал 11', address: 'м. Київ, Нижній Вал 11', price: '6 000 грн/ТО' },
+];
+
+const EQUIPMENT = [
+  // Shop 0 — Бажана 16Д
+  [
+    {inv:'А41215', name:'Шафа Технохолод Техас 1400 л, холодильна (0°/+4°С)', type:'cold'},
+    {inv:'А40685', name:'Апарат Tecnodom ATT05, шокова заморозка', type:'freeze'},
+    {inv:'А40696', name:'Льодогенератор Brema G1000А', type:'other'},
+    {inv:'А40688', name:'Камера 4.08×2.82×2.20м, холодильна, USK-Bud 80', type:'cold'},
+    {inv:'А40689', name:'Камера 4.38×3.10×2.24м, морозильна, USK-Bud 100', type:'freeze'},
+    {inv:'А40690', name:'Камера 5.12×2.91×2.20м, холодильна, USK-Bud 80', type:'cold'},
+    {inv:'А40691', name:'Ларь Montreal ECO XL 2500 (-) морозильний', type:'freeze'},
+    {inv:'А40692', name:'Ларь Montreal ECO XL 2500 (-) морозильний', type:'freeze'},
+    {inv:'А40693', name:'Ларь Montreal ECO XL 2500 (-) морозильний', type:'freeze'},
+    {inv:'А40694', name:'Ларь Montreal ECO XL 2500 (-) морозильний', type:'freeze'},
+    {inv:'А40695', name:'Ларь Montreal ECO XL 2500 (-) морозильний', type:'freeze'},
+    {inv:'А40703', name:'Стіл Forcold G-GN2100TN-FC, холодильний', type:'cold'},
+    {inv:'А40704', name:'Стіл Forcold G-GN3100TN-FC, холодильний', type:'cold'},
+    {inv:'А40705', name:'Стіл Forcold G-GN3100TN-FC, холодильний', type:'cold'},
+    {inv:'А40706', name:'Стіл Forcold G-GN2100BT-FC, морозильний', type:'freeze'},
+    {inv:'А40707', name:'Стіл Forcold (Саладетті) G-PS300-FC, холодильний', type:'cold'},
+    {inv:'А40708', name:'Стіл Forcold (Саладетті) G-PS300-FC, холодильний', type:'cold'},
+    {inv:'А40709', name:'Стіл Forcold (Саладетті) G-PS300-FC, холодильний', type:'cold'},
+    {inv:'А40710', name:'Стіл Forcold (Саладетті) G-PS300-FC, холодильний', type:'cold'},
+    {inv:'А40711', name:'Стіл Forcold (Саладетті) G-PS300-FC, холодильний', type:'cold'},
+    {inv:'А40714', name:'Вітрина GRACIA 2.5, холодильна', type:'cold'},
+    {inv:'А40715', name:'Вітрина Aura Slim 1.25, холодильна гірка', type:'cold'},
+    {inv:'А40716', name:'Вітрина GRACIA D-M 2.5, холодильна', type:'cold'},
+    {inv:'А40717', name:'Вітрина GRACIA D-M 2.5, холодильна', type:'cold'},
+    {inv:'А40718', name:'Вітрина GRACIA D 1.56, холодильна', type:'cold'},
+    {inv:'А40719', name:'Вітрина GRACIA D 1.56, холодильна', type:'cold'},
+    {inv:'А40722', name:'Вітрина AURA-M 1.88, гірка холодильна', type:'cold'},
+    {inv:'А40723', name:'Вітрина AURA-M 1.25, гірка холодильна', type:'cold'},
+    {inv:'А41038', name:'Вітрина Aura Slim 1.25, холодильна гірка', type:'cold'},
+    {inv:'ТФ1040069', name:'Шафа холодильна Forcar G-GN650TN-FC', type:'cold'},
+    {inv:'ТФ1040071', name:'Шафа холодильна Tecnodom AF06EKOMTN', type:'cold'},
+  ],
+  // Shop 1 — Малишка 4Д
+  [
+    {inv:'А40840', name:'Вітрина AURA Slim 2.5 гірка-регал 4 рівні, RAL 7016', type:'cold'},
+    {inv:'А40841', name:'Вітрина AURA Slim 2.5 гірка-регал 5 рівнів, RAL 7016', type:'cold'},
+    {inv:'А40842', name:'Вітрина GRACIA 1.56, холодильна', type:'cold'},
+    {inv:'А40843', name:'Вітрина GRACIA 1.88, холодильна, RAL 7016', type:'cold'},
+    {inv:'А40844', name:'Вітрина GRACIA D 1.56, холодильна', type:'cold'},
+    {inv:'А40845', name:'Вітрина GRACIA D 1.88, холодильна', type:'cold'},
+    {inv:'А40847', name:'Камера 4800×4030×2700мм, -18/-22°С, морозильна', type:'freeze'},
+    {inv:'А40848', name:'Камера 5340×2375×2660мм, -5/+5°С, холодильна', type:'cold'},
+    {inv:'А40849', name:'Камера 6220×2235×2660мм, -5/+5°С, холодильна', type:'cold'},
+    {inv:'А40850', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40851', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40852', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40853', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40854', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40858', name:'Стіл Forcold G-GN2100TN-FC, холодильний', type:'cold'},
+    {inv:'А40859', name:'Стіл Tecnodom TF02MIDGN, 2-дверний, холодильний', type:'cold'},
+    {inv:'А40903', name:'Льодогенератор Brema G1000А', type:'other'},
+    {inv:'А60125', name:'Стіл Forcar G-PS200 піцерійний', type:'cold'},
+    {inv:'А60126', name:'Стіл Forcar G-PS200 піцерійний', type:'cold'},
+    {inv:'А60127', name:'Стіл Forcar G-PS300 піцерійний', type:'cold'},
+    {inv:'А60128', name:'Стіл Forcar G-S901 піцерійний, 2 двері', type:'cold'},
+  ],
+  // Shop 2 — Стуса 52, Вишневе
+  [
+    {inv:'А40662', name:'Стіл Forcold (саладетта) G-PS300-FC, холодильний', type:'cold'},
+    {inv:'А40928', name:'Вітрина AURA Slim 2.5 гірка-регал 4 рівні, RAL 7016', type:'cold'},
+    {inv:'А40929', name:'Вітрина AURA Slim 2.5 гірка-регал 5 рівнів, RAL 7016', type:'cold'},
+    {inv:'А40930', name:'Вітрина Gracia D 0.94, холодильна, спарена (права)', type:'cold'},
+    {inv:'А40931', name:'Вітрина Gracia D 0.94, холодильна, спарена (права)', type:'cold'},
+    {inv:'А40932', name:'Вітрина GRACIA D 2.5, холодильна, спарена (права)', type:'cold'},
+    {inv:'А40933', name:'Вітрина Gracia D 2.5, холодильна, спарена (ліва) + стик. комплект', type:'cold'},
+    {inv:'А40936', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40937', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40938', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40939', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40940', name:'Ларь PARIS 250 (-) LDH, морозильний', type:'freeze'},
+    {inv:'А40941', name:'Льодогенератор Brema G1000А', type:'other'},
+    {inv:'А40945', name:'Стіл Forcar G-PS200, холодильний', type:'cold'},
+    {inv:'А40946', name:'Стіл Forcar G-PS200, холодильний', type:'cold'},
+    {inv:'А40947', name:'Стіл Forcar G-S901 піцерійний, 2 двері', type:'cold'},
+    {inv:'А40950', name:'Камера 2200×3100×2600мм, -5/+5°С, холодильна', type:'cold'},
+    {inv:'А40951', name:'Камера 3700×3100×2600мм, -5/+5°С, холодильна', type:'cold'},
+    {inv:'А40952', name:'Камера 4500×4500×2600мм, -18/-22°С, морозильна', type:'freeze'},
+    {inv:'А40954', name:'Стіл Forcar G-GN2200TN, холодильний, 2 двері', type:'cold'},
+    {inv:'ТФ1040061', name:'Стіл морозильний Forcar G-GN2100BT', type:'freeze'},
+  ],
+  // Shop 3 — Березнева 12
+  [
+    {inv:'А40968', name:'Льодогенератор Brema G510AHC', type:'other'},
+    {inv:'А41196', name:'Стіл REEDNEE S901, холодильний', type:'cold'},
+    {inv:'А41180', name:'Стіл Tehma 1400мм холодильний саладетта, з кришкою', type:'cold'},
+    {inv:'А41194', name:'Стіл Forcold G-PS200-FC (саладета), холодильний', type:'cold'},
+    {inv:'А41195', name:'Стіл Forcold G-PS200-FC (саладета), холодильний', type:'cold'},
+    {inv:'А41199', name:'Шафа Tecnodom P-AFD14TN-B-PK, 2 двері, холодильна', type:'cold'},
+    {inv:'А41200', name:'Шафа Tecnodom P-AFD14TN-B-PK, 2 двері, холодильна', type:'cold'},
+    {inv:'А41205', name:'Вітрина Missouri AC120 SBA-125, холодильна (ліва)', type:'cold'},
+    {inv:'А41207', name:'Вітрина Missouri AC120 SBA-250, холодильна', type:'cold'},
+    {inv:'А41198', name:'Шафа REEDNEE LG320S барний, 320л, 3 скляні двері', type:'cold'},
+    {inv:'А41206', name:'Вітрина Missouri AC120 SBA-187, холодильна (права)', type:'cold'},
+    {inv:'А41181', name:'Стіл Tehma 1400мм, холодильний', type:'cold'},
+    {inv:'А41182', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41183', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А116870', name:'Повітроохолоджувач TEHMA TGSB-391E, спліт', type:'other'},
+    {inv:'А116871', name:'Повітроохолоджувач ТЕНМА TGS-291E, спліт (внутр.)', type:'other'},
+  ],
+  // Shop 4 — Буча, Бірюкова 2А
+  [
+    {inv:'А41236', name:'Льодогенератор Brema G510AHC', type:'other'},
+    {inv:'А41251', name:'Вітрина Missouri AC120 SBA-187, холодильна (ліва)', type:'cold'},
+    {inv:'А41242', name:'Стіл Forcold G-PS200-FC (саладета), холодильний', type:'cold'},
+    {inv:'А41239', name:'Стіл Tehma 1400мм, холодильний', type:'cold'},
+    {inv:'А41240', name:'Стіл Tehma 1400мм, холодильний', type:'cold'},
+    {inv:'А41245', name:'Шафа Forcold G-GN650TN-FC, холодильна (права)', type:'cold'},
+    {inv:'А41243', name:'Стіл REEDNEE S901, холодильний', type:'cold'},
+    {inv:'А41250', name:'Вітрина Missouri AC120 SBA-125, холодильна (права)', type:'cold'},
+    {inv:'А41253', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41254', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41255', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41256', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41257', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41258', name:'Скриня M800S Juka, морозильна', type:'freeze'},
+    {inv:'А41252', name:'Вітрина Missouri AC120 SBA-250, холодильна', type:'cold'},
+    {inv:'А41241', name:'Стіл Tehma 1400мм саладетта з кришкою, холодильний', type:'cold'},
+    {inv:'А41247', name:'Система Gratas GS-14, середньотемп. спліт (0/+5)', type:'cold'},
+    {inv:'А41248', name:'Система Gratas GS-14, середньотемп. спліт (0/+5)', type:'cold'},
+    {inv:'А41246', name:'Система Gratas GF-20, низькотемп. спліт (-22)', type:'freeze'},
+  ],
+  // Shop 5 — Нижній Вал 11
+  [
+    {inv:'А41270', name:'Бункер Brema Bin240, для льоду', type:'other'},
+    {inv:'А41275', name:'Вітрина Indiana medium AV.070 гірка-регал 5 рівнів, RAL 7016', type:'cold'},
+    {inv:'А41276', name:'Вітрина Missouri AC120 SBA-125, холодильна (ліва)', type:'cold'},
+    {inv:'А41277', name:'Вітрина Missouri AC120 SBA-187, холодильна (права)', type:'cold'},
+    {inv:'А41278', name:'Вітрина Missouri AC120 SBA-250, холодильна', type:'cold'},
+    {inv:'А41283', name:'Льодогенератор Brema G510AHC', type:'other'},
+    {inv:'А41279', name:'Скриня PARIS 250 (-) LDH, морозильна', type:'freeze'},
+    {inv:'А41280', name:'Скриня PARIS 250 (-) LDH, морозильна', type:'freeze'},
+    {inv:'А41281', name:'Скриня PARIS 250 (-) LDH, морозильна', type:'freeze'},
+    {inv:'А41282', name:'Скриня PARIS 250 (-) LDH, морозильна', type:'freeze'},
+    {inv:'А41286', name:'Стіл Tehma 1400мм, холодильний', type:'cold'},
+    {inv:'А41287', name:'Стіл Tehma 1400мм, холодильний', type:'cold'},
+    {inv:'А41288', name:'Стіл Tehma 1400мм, холодильний', type:'cold'},
+    {inv:'А41291', name:'Стіл REEDNEE S901, холодильний', type:'cold'},
+    {inv:'А41293', name:'Шафа Forcold G-GN650TN-FC, холодильна (ліва)', type:'cold'},
+  ],
+];
+
+// ── FIREBASE CONFIG ────────────────────────────────────────────────────
+const FIREBASE_URL = 'https://veladis-crm-default-rtdb.firebaseio.com';
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let tickets = [];
+let currentFilter = 'all';
+let currentTicketId = null;
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('f-date').value = today;
+
+// IndexedDB for photos (no size limit vs localStorage)
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('crm_photos', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('photos', { keyPath: 'ticketId' });
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej('DB error');
+  });
+}
+function savePhotos(ticketId, photos) {
+  return new Promise(res => {
+    const tx = db.transaction('photos', 'readwrite');
+    tx.objectStore('photos').put({ ticketId, photos });
+    tx.oncomplete = res;
+  });
+}
+function loadPhotos(ticketId) {
+  return new Promise(res => {
+    const tx = db.transaction('photos', 'readonly');
+    const req = tx.objectStore('photos').get(ticketId);
+    req.onsuccess = () => res(req.result ? req.result.photos : []);
+  });
+}
+function loadAllPhotos() {
+  return new Promise(res => {
+    const tx = db.transaction('photos', 'readonly');
+    const req = tx.objectStore('photos').getAll();
+    req.onsuccess = () => res(req.result || []);
+  });
+}
+function deletePhotosDB(ticketId) {
+  const tx = db.transaction('photos', 'readwrite');
+  tx.objectStore('photos').delete(ticketId);
+}
+
+function save() {
+  // Save to localStorage as backup
+  const slim = tickets.map(t => { const {photos,...rest} = t; return rest; });
+  localStorage.setItem('crm_veladis', JSON.stringify(slim));
+  // Save to Firebase
+  saveToFirebase();
+}
+
+async function saveToFirebase() {
+  try {
+    const slim = tickets.map(t => { const {photos,...rest} = t; return rest; });
+    await fetch(FIREBASE_URL + '/tickets.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(slim)
+    });
+  } catch(e) {
+    console.log('Firebase save error:', e);
+  }
+}
+
+async function loadFromFirebase() {
+  try {
+    const res = await fetch(FIREBASE_URL + '/tickets.json');
+    const data = await res.json();
+    if (data && Array.isArray(data) && data.length > 0) {
+      // Merge firebase tickets with local photos
+      const allPhotos = await loadAllPhotos();
+      const photoMap = {};
+      allPhotos.forEach(p => photoMap[p.ticketId] = p.photos);
+      tickets = data.map(t => ({ ...t, photos: photoMap[t.id] || [], services: t.services || [], parts: t.parts || [] }));
+      localStorage.setItem('crm_veladis', JSON.stringify(data));
+      renderList();
+      updateHeader();
+      showBackupMsg('✅ Синхронізовано з хмарою', 'var(--green)');
+    }
+  } catch(e) {
+    console.log('Firebase load error:', e);
+  }
+}
+
+function genId() { return 'ЗВ-' + String(Date.now()).slice(-5); }
+
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwk-o7yW0QsZKIo9gBRXR-uEE68DOptYz7f7oQ6a2bRrNLjhhqrlR4-GCs7DOcH5an7/exec';
+
+function sendToSheets(ticket) {
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ticket)
+  }).catch(()=>{});
+}
+
+async function manualSync() {
+  const btn = document.getElementById('sync-btn');
+  if(btn){ btn.textContent='⏳ Синхронізація...'; btn.disabled=true; }
+  await loadFromFirebase();
+  if(btn){ btn.textContent='☁️ Синхронізувати'; btn.disabled=false; }
+}
+
+async function syncFromSheets() {
+  const btn = document.getElementById('sync-btn');
+  if(btn){ btn.textContent='⏳ Синхронізація...'; btn.disabled=true; }
+  try {
+    const res = await fetch(SHEETS_URL + '?t=' + Date.now());
+    const data = await res.json();
+    if (!data.rows || data.rows.length < 2) {
+      if(btn){ btn.textContent='☁️ Синхронізувати'; btn.disabled=false; }
+      showBackupMsg('У таблиці ще немає заявок від інженерів', 'var(--muted)');
+      return;
+    }
+    const headers = data.rows[0];
+    const newTickets = data.rows.slice(1).map(row => {
+      const obj = {};
+      headers.forEach((h,i) => obj[h] = row[i]);
+      return {
+        id: obj['ID'] || genId(),
+        shopName: obj['Магазин'] || '',
+        shopAddress: obj['Адреса'] || '',
+        type: obj['Тип несправності'] || '',
+        equip: obj['Обладнання'] || '',
+        priority: obj['Пріоритет'] || 'medium',
+        status: obj['Статус'] === 'Нова' ? 'new' : obj['Статус'] === 'В роботі' ? 'progress' : 'done',
+        desc: obj['Опис'] || '',
+        contact: obj['Контакт'] || '',
+        engineer: obj['Інженер'] || '',
+        date: obj['Дата'] || today,
+        history: [{ date: obj['Дата'] || today, text: 'Заявку створено інженером: ' + (obj['Інженер']||'—') }],
+        parts: [], photos: []
+      };
+    });
+    // merge: add only tickets not already in local list
+    const existingIds = new Set(tickets.map(t => t.id));
+    const added = newTickets.filter(t => !existingIds.has(t.id));
+    if (added.length) {
+      tickets = [...added, ...tickets];
+      save(); renderList(); updateHeader();
+      showBackupMsg('✅ Додано ' + added.length + ' нових заявок від інженерів', 'var(--green)');
+    } else {
+      showBackupMsg('✅ Все актуально, нових заявок немає', 'var(--steel)');
+    }
+  } catch(e) {
+    showBackupMsg('❌ Помилка синхронізації: ' + e.message, 'var(--coral)');
+  }
+  if(btn){ btn.textContent='☁️ Синхронізувати'; btn.disabled=false; }
+}
+
+// Init: load from Firebase first, fallback to localStorage
+openDB().then(async () => {
+  // Load local first for instant display
+  const stored = JSON.parse(localStorage.getItem('crm_veladis') || '[]');
+  const allPhotos = await loadAllPhotos();
+  const photoMap = {};
+  allPhotos.forEach(p => photoMap[p.ticketId] = p.photos);
+  tickets = stored.map(t => ({ ...t, photos: photoMap[t.id] || [], services: t.services || [], parts: t.parts || [] }));
+  renderList();
+  updateHeader();
+  // Then sync from Firebase
+  await loadFromFirebase();
+});
+
+// ── TABS ───────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const idx = {list:0,new:1,equip:2,stats:3}[name];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  if (name==='list') renderList();
+  if (name==='equip') renderEquip();
+  if (name==='stats') renderStats();
+}
+
+// ── EQUIPMENT SELECTOR ─────────────────────────────────────────────────
+function loadEquipForShop() {
+  const idx = document.getElementById('f-shop').value;
+  const sel = document.getElementById('f-equip');
+  if (idx === '') { sel.innerHTML = '<option value="">Спочатку оберіть магазин</option>'; return; }
+  const items = EQUIPMENT[parseInt(idx)];
+  sel.innerHTML = '<option value="">Оберіть обладнання</option>' +
+    items.map(e => `<option value="${e.inv}">[${e.inv}] ${e.name}</option>`).join('');
+}
+
+// ── CREATE TICKET ──────────────────────────────────────────────────────
+function createTicket() {
+  const shopIdx = document.getElementById('f-shop').value;
+  const type = document.getElementById('f-type').value;
+  const equipVal = document.getElementById('f-equip').value;
+  const priority = document.getElementById('f-priority').value;
+  const desc = document.getElementById('f-desc').value;
+  const date = document.getElementById('f-date').value;
+  const contact = document.getElementById('f-contact').value;
+  if (!shopIdx && shopIdx!=='0') { alert('Оберіть магазин'); return; }
+  if (!type) { alert('Оберіть тип несправності'); return; }
+
+  const shop = SHOPS[parseInt(shopIdx)];
+  let equipName = equipVal;
+  if (equipVal) {
+    const found = EQUIPMENT[parseInt(shopIdx)].find(e => e.inv === equipVal);
+    if (found) equipName = `[${found.inv}] ${found.name}`;
+  }
+
+  const ticket = {
+    id: genId(), shopIdx: parseInt(shopIdx),
+    shopName: shop.name, shopAddress: shop.address,
+    type, equip: equipName, priority, desc, date: date||today, contact,
+    status: 'new',
+    history: [{ date: date||today, text: 'Заявку створено' }],
+    parts: []
+  };
+  tickets.unshift(ticket);
+  save(); updateHeader();
+  // Sync to Google Sheets
+  sendToSheets(ticket);
+
+  ['f-type','f-desc','f-contact'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-priority').value='medium';
+  document.getElementById('f-date').value=today;
+  document.getElementById('f-shop').value='';
+  document.getElementById('f-equip').innerHTML='<option value="">Спочатку оберіть магазин</option>';
+  switchTab('list');
+}
+
+// ── FILTER ─────────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── RENDER LIST ────────────────────────────────────────────────────────
+function statusLabel(s) {
+  if(s==='new') return '<span class="badge badge-new">Нова</span>';
+  if(s==='progress') return '<span class="badge badge-progress">В роботі</span>';
+  if(s==='done') return '<span class="badge badge-done">Завершена</span>';
+}
+function pIcon(p) { return p==='high'?'🔴':p==='medium'?'🟡':'🟢'; }
+
+function renderList() {
+  const list = document.getElementById('tickets-list');
+  let filtered = tickets;
+  if(currentFilter!=='all') filtered = tickets.filter(t=>t.status===currentFilter);
+  if(!filtered.length) {
+    list.innerHTML='<div class="empty"><div class="empty-icon">🧊</div>Заявок немає</div>'; return;
+  }
+  list.innerHTML = filtered.map(t=>`
+    <div class="ticket priority-${t.priority}" onclick="openTicket('${t.id}')">
+      <div class="ticket-header">
+        <span class="ticket-id">${t.id}</span>${statusLabel(t.status)}
+      </div>
+      <div class="ticket-title">${pIcon(t.priority)} ${t.type}</div>
+      <div class="ticket-meta">
+        <span>🏪 ${t.shopName}</span>
+        ${t.equip?`<span>⚙️ ${t.equip.length>40?t.equip.slice(0,40)+'…':t.equip}</span>`:''}
+        <span>📅 ${t.date}</span>
+        ${t.parts.length?`<span>🔩 ${t.parts.length} зап.</span>`:''}
+        ${(t.services||[]).length?`<span>🛠 ${t.services.length} посл.</span>`:''}
+      </div>
+    </div>`).join('');
+  updateHeader();
+}
+
+function updateHeader() {
+  document.getElementById('h-open').textContent = tickets.filter(t=>t.status!=='done').length;
+  document.getElementById('h-today').textContent = tickets.filter(t=>t.date===today).length;
+}
+
+// ── OPEN TICKET MODAL ──────────────────────────────────────────────────
+function openTicket(id) {
+  const t = tickets.find(x=>x.id===id); if(!t) return;
+  currentTicketId = id;
+  document.getElementById('modal-title').textContent = `${t.id} — ${t.type}`;
+
+  const partsHtml = t.parts.length
+    ? t.parts.map((p,i)=>`<div class="part-item"><span>${p.name}</span><span style="color:var(--muted)">${p.qty} шт. · ${p.cost} грн</span><button class="btn btn-danger btn-sm" onclick="removePart(${i})">✕</button></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:6px 0">Запчастини не додані</div>';
+
+  const servicesHtml = (t.services||[]).length
+    ? (t.services||[]).map((s,i)=>`<div class="part-item"><span>${s.name}</span><span style="color:var(--muted)">${s.cost} грн</span><button class="btn btn-danger btn-sm" onclick="removeService(${i})">✕</button></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:6px 0">Послуги не додані</div>';
+
+  const histHtml = t.history.slice().reverse()
+    .map(h=>`<div class="history-item"><div class="history-date">📅 ${h.date}</div>${h.text}</div>`).join('');
+
+  const btnStyle = (s,active,col)=>active
+    ?`class="btn btn-sm btn-primary"`
+    :`class="btn btn-sm" style="background:#fff;border:1.5px solid ${col};color:${col}"`;
+
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn btn-sm status-btn" data-status="new" onclick="setStatus('new')" style="background:${t.status==='new'?'var(--steel)':'#fff'};color:${t.status==='new'?'#fff':'#1A5CB0'};border:1.5px solid ${t.status==='new'?'var(--steel)':'#1A5CB0'}">Нова</button>
+      <button class="btn btn-sm status-btn" data-status="progress" onclick="setStatus('progress')" style="background:${t.status==='progress'?'var(--steel)':'#fff'};color:${t.status==='progress'?'#fff':'#A06C00'};border:1.5px solid ${t.status==='progress'?'var(--steel)':'#A06C00'}">В роботі</button>
+      <button class="btn btn-sm status-btn" data-status="done" onclick="setStatus('done')" style="background:${t.status==='done'?'var(--steel)':'#fff'};color:${t.status==='done'?'#fff':'#1A6B3A'};border:1.5px solid ${t.status==='done'?'var(--steel)':'#1A6B3A'}">Завершена</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:10px;background:var(--surface);padding:10px;border-radius:8px">
+      🏪 <strong>${t.shopName}</strong><br>
+      📍 ${t.shopAddress}<br>
+      📅 ${t.date} &nbsp;·&nbsp; ${pIcon(t.priority)} ${t.priority==='high'?'Високий':t.priority==='medium'?'Середній':'Низький'}
+      ${t.contact?'<br>📞 '+t.contact:''}
+    </div>
+    ${t.equip?`<div style="font-size:12px;background:#e3f0ff;color:#1a5cb0;padding:7px 11px;border-radius:8px;margin-bottom:10px;font-weight:600">⚙️ ${t.equip}</div>`:''}
+    ${t.desc?`<div style="font-size:13px;background:var(--surface);border-radius:8px;padding:11px;margin-bottom:14px">${t.desc}</div>`:''}
+    <hr class="divider">
+    <div style="font-weight:700;font-size:13px;margin-bottom:7px">🔩 Запчастини та витратники</div>
+    <div id="m-parts">${partsHtml}</div>
+    <div class="add-part-row">
+      <input type="text" id="p-name" placeholder="Назва">
+      <input type="number" id="p-qty" placeholder="Кіл." style="width:72px">
+      <input type="number" id="p-cost" placeholder="грн" style="width:80px">
+      <button class="btn btn-primary btn-sm" onclick="addPart()">+</button>
+    </div>
+    <hr class="divider">
+    <div style="font-weight:700;font-size:13px;margin-bottom:9px">🛠 Послуги</div>
+    <div id="m-services">${servicesHtml}</div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">ОБЕРІТЬ З ПРАЙСУ:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px" id="service-chips">
+        ${[
+          ['Виїзд (Київ)','1800'],['Виїзд (Область)','2160'],['Виїзд (вихідний)','2200'],
+          ['Заміна компресора','3600'],['Усунення течі фреону','2800'],['Дозаправка фреоном','1500'],
+          ['Заміна контролера','1400'],['Заміна випарника','5300'],['Заміна фільтра','1200'],
+          ['Вакуумація','600'],['Перевірка азотом','1800'],['Заміна датчика','990'],
+          ['Заміна кап. трубки','2800'],['Заміна вент. випарника','1200'],['Заміна вент. конденсатора','1500'],
+          ['Заміна кнопки','300'],['Заміна проводки','1200'],['Відтайка випарника','700']
+        ].map(([n,c])=>`<button onclick="addServiceDirect('${n}',${c})" style="padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--white);font-size:11px;cursor:pointer;color:var(--text);transition:all 0.1s" onmouseover="this.style.background='var(--steel)';this.style.color='#fff'" onmouseout="this.style.background='var(--white)';this.style.color='var(--text)'">${n} <span style="color:var(--muted)">${c}₴</span></button>`).join('')}
+      </div>
+    </div>
+    <div class="add-part-row" style="margin-top:6px">
+      <input type="text" id="s-manual-name" placeholder="✏️ Інша послуга вручну" style="flex:1">
+      <input type="number" id="s-manual-cost" placeholder="грн" style="width:80px">
+      <button class="btn btn-primary btn-sm" onclick="addServiceManual()">+</button>
+    </div>
+    <div style="margin-top:10px;padding:8px 11px;background:var(--surface);border-radius:8px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between">
+      <span>💰 Загальна вартість послуг:</span>
+      <strong id="services-total" style="color:var(--deep)">0 грн</strong>
+    </div>
+    <hr class="divider">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px">📸 Фото до/після</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">До ремонту</div>
+        <div id="photos-before" style="display:flex;flex-wrap:wrap;gap:6px;min-height:60px"></div>
+        <label class="btn btn-sm" style="margin-top:7px;background:var(--surface);border:1.5px dashed var(--border);color:var(--muted);cursor:pointer;width:100%;justify-content:center">
+          📷 Додати фото
+          <input type="file" accept="image/*" multiple onchange="addPhotos(event,'before')" style="display:none">
+        </label>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Після ремонту</div>
+        <div id="photos-after" style="display:flex;flex-wrap:wrap;gap:6px;min-height:60px"></div>
+        <label class="btn btn-sm" style="margin-top:7px;background:var(--surface);border:1.5px dashed var(--border);color:var(--muted);cursor:pointer;width:100%;justify-content:center">
+          📷 Додати фото
+          <input type="file" accept="image/*" multiple onchange="addPhotos(event,'after')" style="display:none">
+        </label>
+      </div>
+    </div>
+    <hr class="divider">
+    <div style="font-weight:700;font-size:13px;margin-bottom:7px">📝 Історія обслуговування</div>
+    <div id="m-history">${histHtml}</div>
+    <div class="add-part-row" style="margin-top:7px">
+      <input type="text" id="h-text" placeholder="Додати запис...">
+      <button class="btn btn-primary btn-sm" onclick="addHistory()">+</button>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-danger" onclick="deleteCurrentTicket()">🗑 Видалити заявку</button>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+  renderPhotos(t);
+  renderServicesTotal();
+}
+
+function renderPhotos(t) {
+  ['before','after'].forEach(type => {
+    const container = document.getElementById('photos-' + type);
+    if (!container) return;
+    const photos = (t.photos || []).filter(p => p.type === type);
+    container.innerHTML = photos.map((p, i) => `
+      <div style="position:relative;display:inline-block">
+        <img src="${p.data}" onclick="viewPhoto('${p.data}')"
+          style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid var(--border)">
+        <button onclick="removePhoto('${type}',${i})"
+          style="position:absolute;top:-5px;right:-5px;background:var(--coral);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+      </div>`).join('');
+  });
+}
+
+function addPhotos(event, type) {
+  const files = Array.from(event.target.files);
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t.photos) t.photos = [];
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const max = 900;
+        let w = img.width, h = img.height;
+        if (w > max) { h = Math.round(h * max / w); w = max; }
+        if (h > max) { w = Math.round(w * max / h); h = max; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const data = canvas.toDataURL('image/jpeg', 0.78);
+        t.photos.push({ type, data, date: today });
+        loaded++;
+        if (loaded === files.length) {
+          t.history.push({ date: today, text: `Додано ${files.length} фото (${type === 'before' ? 'до' : 'після'} ремонту)` });
+          save();
+          savePhotos(t.id, t.photos);
+          renderPhotos(t);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function removePhoto(type, idx) {
+  const t = tickets.find(x => x.id === currentTicketId);
+  const typePhotos = (t.photos || []).filter(p => p.type === type);
+  const photoToRemove = typePhotos[idx];
+  t.photos = t.photos.filter(p => p !== photoToRemove);
+  save(); savePhotos(t.id, t.photos); renderPhotos(t);
+}
+
+function viewPhoto(src) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  overlay.innerHTML = `<img src="${src}" style="max-width:95vw;max-height:95vh;border-radius:8px;object-fit:contain">`;
+  overlay.onclick = () => document.body.removeChild(overlay);
+  document.body.appendChild(overlay);
+}
+
+function setStatus(status) {
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t) return;
+  t.status = status;
+  const l = {new:'Статус: Нова', progress:'Статус: В роботі', done:'Статус: Завершена'};
+  t.history.push({ date: today, text: l[status] });
+  save();
+  renderList();
+
+  // Update only status buttons without reopening modal
+  const colors = { new: '#1A5CB0', progress: '#A06C00', done: '#1A6B3A' };
+  const labels = { new: 'Нова', progress: 'В роботі', done: 'Завершена' };
+  document.querySelectorAll('.status-btn').forEach(btn => {
+    const s = btn.dataset.status;
+    if (s === status) {
+      btn.style.background = 'var(--steel)';
+      btn.style.color = '#fff';
+      btn.style.border = '1.5px solid var(--steel)';
+    } else {
+      btn.style.background = '#fff';
+      btn.style.color = colors[s];
+      btn.style.border = `1.5px solid ${colors[s]}`;
+    }
+  });
+
+  // Append to history display
+  const histEl = document.getElementById('m-history');
+  if (histEl) {
+    const newEntry = document.createElement('div');
+    newEntry.className = 'history-item';
+    newEntry.innerHTML = `<div class="history-date">📅 ${today}</div>${l[status]}`;
+    histEl.insertBefore(newEntry, histEl.firstChild);
+  }
+}
+
+function addPart() {
+  const name = document.getElementById('p-name').value.trim();
+  const qty = parseInt(document.getElementById('p-qty').value) || 1;
+  const cost = parseInt(document.getElementById('p-cost').value) || 0;
+  if (!name) return;
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t) return;
+  t.parts.push({ name, qty, cost });
+  t.history.push({ date: today, text: `Запчастина: ${name} × ${qty}` });
+  save();
+  const container = document.getElementById('m-parts');
+  if (container) {
+    container.innerHTML = t.parts.map((p,i) =>
+      `<div class="part-item"><span>${p.name}</span><span style="color:var(--muted)">${p.qty} шт. · ${p.cost} грн</span><button class="btn btn-danger btn-sm" onclick="removePart(${i})">✕</button></div>`
+    ).join('');
+  }
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-qty').value = '';
+  document.getElementById('p-cost').value = '';
+}
+
+function removePart(i) {
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t) return;
+  t.parts.splice(i, 1);
+  save();
+  const container = document.getElementById('m-parts');
+  if (container) {
+    container.innerHTML = t.parts.length
+      ? t.parts.map((p,j) =>
+          `<div class="part-item"><span>${p.name}</span><span style="color:var(--muted)">${p.qty} шт. · ${p.cost} грн</span><button class="btn btn-danger btn-sm" onclick="removePart(${j})">✕</button></div>`
+        ).join('')
+      : '<div style="color:var(--muted);font-size:13px;padding:6px 0">Запчастини не додані</div>';
+  }
+}
+
+function addServiceDirect(name, cost) {
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t) return;
+  if (!t.services) t.services = [];
+  t.services.push({ name, cost });
+  t.history.push({ date: today, text: `Послуга: ${name} · ${cost} грн` });
+  save();
+  refreshServicesList(t);
+  renderServicesTotal();
+}
+
+function addServiceManual() {
+  const name = document.getElementById('s-manual-name').value.trim();
+  const cost = parseInt(document.getElementById('s-manual-cost').value) || 0;
+  if (!name) return;
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t) return;
+  if (!t.services) t.services = [];
+  t.services.push({ name, cost });
+  t.history.push({ date: today, text: `Послуга: ${name} · ${cost} грн` });
+  save();
+  document.getElementById('s-manual-name').value = '';
+  document.getElementById('s-manual-cost').value = '';
+  refreshServicesList(t);
+  renderServicesTotal();
+}
+
+function refreshServicesList(t) {
+  const container = document.getElementById('m-services');
+  if (!container) return;
+  container.innerHTML = (t.services || []).length
+    ? (t.services).map((s,i) =>
+        `<div class="part-item">
+          <span style="flex:1;font-size:13px">${s.name}</span>
+          <div style="display:flex;align-items:center;gap:4px;margin:0 6px">
+            <button onclick="changeServiceQty(${i},-1)" style="width:26px;height:26px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer;font-size:16px;font-weight:700;padding:0">−</button>
+            <span id="svc-qty-${i}" style="min-width:20px;text-align:center;font-weight:700;font-size:14px">${s.qty||1}</span>
+            <button onclick="changeServiceQty(${i},1)" style="width:26px;height:26px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer;font-size:16px;font-weight:700;padding:0">+</button>
+          </div>
+          <span id="svc-sum-${i}" style="color:var(--muted);min-width:72px;text-align:right;font-size:13px">${((s.qty||1)*s.cost).toLocaleString('uk-UA')} грн</span>
+          <button class="btn btn-danger btn-sm" style="margin-left:6px" onclick="removeService(${i})">✕</button>
+        </div>`
+      ).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:6px 0">Послуги не додані</div>';
+}
+
+function removeService(i) {
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t) return;
+  t.services.splice(i, 1);
+  save();
+  refreshServicesList(t);
+  renderServicesTotal();
+}
+
+function toggleCustomService() {
+  const sel = document.getElementById('s-name');
+  const row = document.getElementById('s-custom-row');
+  if (!sel || !row) return;
+  row.style.display = sel.value === 'custom' ? 'block' : 'none';
+}
+
+function changeServiceQty(i, delta) {
+  const t = tickets.find(x => x.id === currentTicketId);
+  if (!t || !t.services[i]) return;
+  const s = t.services[i];
+  s.qty = Math.max(1, (s.qty || 1) + delta);
+  save();
+  const qtyEl = document.getElementById('svc-qty-' + i);
+  const sumEl = document.getElementById('svc-sum-' + i);
+  if (qtyEl) qtyEl.textContent = s.qty;
+  if (sumEl) sumEl.textContent = (s.qty * s.cost).toLocaleString('uk-UA') + ' грн';
+  renderServicesTotal();
+}
+
+function renderServicesTotal() {
+  const t = tickets.find(x => x.id === currentTicketId);
+  const el = document.getElementById('services-total');
+  if (!el || !t) return;
+  const total = (t.services || []).reduce((s, x) => s + (parseInt(x.cost) || 0) * (x.qty || 1), 0);
+  el.textContent = total.toLocaleString('uk-UA') + ' грн';
+}
+
+function addHistory() {
+  const text=document.getElementById('h-text').value.trim(); if(!text) return;
+  const t=tickets.find(x=>x.id===currentTicketId);
+  t.history.push({date:today,text}); save(); openTicket(currentTicketId);
+}
+
+function deleteCurrentTicket() {
+  if (!currentTicketId) return;
+  // Show inline confirmation instead of confirm() which is blocked in local files
+  const btn = document.querySelector('.btn-delete-confirm');
+  if (btn) {
+    // Already showing confirm — do the delete
+    deletePhotosDB(currentTicketId);
+    tickets = tickets.filter(x => x.id !== currentTicketId);
+    save();
+    closeModalDirect();
+    renderList();
+    return;
+  }
+  // First click — show confirm button
+  const delBtn = document.querySelector('[onclick="deleteCurrentTicket()"]');
+  if (!delBtn) return;
+  delBtn.textContent = '❓ Натисніть ще раз для підтвердження';
+  delBtn.classList.add('btn-delete-confirm');
+  delBtn.style.background = 'var(--coral)';
+  delBtn.style.color = '#fff';
+  delBtn.style.border = 'none';
+  setTimeout(() => {
+    delBtn.textContent = '🗑 Видалити заявку';
+    delBtn.classList.remove('btn-delete-confirm');
+    delBtn.style.background = '';
+    delBtn.style.color = '';
+    delBtn.style.border = '';
+  }, 3000);
+}
+
+function deleteTicket(id) {
+  deletePhotosDB(id);
+  tickets=tickets.filter(x=>x.id!==id); save(); closeModalDirect(); renderList();
+}
+
+function closeModal(e) { if(e.target===document.getElementById('modal-overlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('open'); renderList(); }
+
+// ── EQUIPMENT TAB ──────────────────────────────────────────────────────
+function renderEquip() {
+  const q = document.getElementById('equip-search').value.toLowerCase();
+  const container = document.getElementById('equip-list');
+  let html = '';
+  SHOPS.forEach((shop, si) => {
+    const items = EQUIPMENT[si].filter(e =>
+      !q || e.name.toLowerCase().includes(q) || e.inv.toLowerCase().includes(q)
+    );
+    if (!items.length) return;
+    const cold = items.filter(e=>e.type==='cold').length;
+    const freeze = items.filter(e=>e.type==='freeze').length;
+    html += `<div class="shop-block">
+      <div class="shop-header">
+        <h3>🏪 ${shop.name}</h3>
+        <p>📍 ${shop.address} &nbsp;·&nbsp; 💰 ${shop.price} &nbsp;·&nbsp; ${items.length} од. (❄️ ${cold} хол. · 🧊 ${freeze} мор.)</p>
+      </div>
+      <table class="equip-table">
+        <thead><tr><th>#</th><th>Інв. номер</th><th>Найменування</th><th>Тип</th></tr></thead>
+        <tbody>${items.map((e,i)=>`<tr>
+          <td style="color:var(--muted)">${i+1}</td>
+          <td><span class="inv-badge">${e.inv}</span></td>
+          <td>${e.name}</td>
+          <td>${e.type==='cold'?'<span class="type-cold">Холод.</span>':e.type==='freeze'?'<span class="type-freeze">Мороз.</span>':'<span class="type-other">Інше</span>'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  });
+  container.innerHTML = html || '<div class="empty"><div class="empty-icon">🔍</div>Нічого не знайдено</div>';
+}
+
+// ── STATS ──────────────────────────────────────────────────────────────
+function renderStats() {
+  document.getElementById('s-total').textContent=tickets.length;
+  document.getElementById('s-open').textContent=tickets.filter(t=>t.status!=='done').length;
+  document.getElementById('s-done').textContent=tickets.filter(t=>t.status==='done').length;
+  const shopCnt={}, typeCnt={};
+  tickets.forEach(t=>{
+    shopCnt[t.shopName]=(shopCnt[t.shopName]||0)+1;
+    typeCnt[t.type]=(typeCnt[t.type]||0)+1;
+  });
+  const bar=(label,count,max,color)=>`<div class="bar-row">
+    <div class="bar-label"><span>${label}</span><strong>${count}</strong></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/max*100)}%;background:${color}"></div></div>
+  </div>`;
+  const sm=Math.max(...Object.values(shopCnt),1);
+  document.getElementById('stat-shops').innerHTML=Object.entries(shopCnt).length
+    ?Object.entries(shopCnt).map(([s,c])=>bar(s,c,sm,'#2C5F7A')).join('')
+    :'<div style="color:var(--muted);font-size:13px">Немає даних</div>';
+  const tm=Math.max(...Object.values(typeCnt),1);
+  document.getElementById('stat-types').innerHTML=Object.entries(typeCnt).length
+    ?Object.entries(typeCnt).map(([s,c])=>bar(s,c,tm,'#E85C3A')).join('')
+    :'<div style="color:var(--muted);font-size:13px">Немає даних</div>';
+}
+
+// ── EXPORT / IMPORT ────────────────────────────────────────────────────
+async function exportData() {
+  const allPhotos = await loadAllPhotos();
+  const photoMap = {};
+  allPhotos.forEach(p => photoMap[p.ticketId] = p.photos);
+  const full = tickets.map(t => ({ ...t, photos: photoMap[t.id] || t.photos || [] }));
+  const data = { version: 2, exported: new Date().toISOString(), tickets: full };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const d = new Date().toISOString().slice(0,10);
+  a.download = `veladis-crm-${d}.json`;
+  a.click();
+  showBackupMsg('✅ Файл збережено з фото: veladis-crm-' + d + '.json', 'var(--green)');
+}
+
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.tickets || !Array.isArray(data.tickets)) throw new Error('Невірний формат');
+      const photoCount = data.tickets.filter(t => t.photos && t.photos.length).length;
+      if (!confirm(`Завантажити ${data.tickets.length} заявок (фото у ${photoCount} заявках)?\nПоточні дані будуть замінені.`)) return;
+
+      // Save photos to IndexedDB, tickets without photos to localStorage
+      for (const t of data.tickets) {
+        if (t.photos && t.photos.length) {
+          await savePhotos(t.id, t.photos);
+        }
+      }
+      tickets = data.tickets.map(t => ({ ...t, photos: t.photos || [] }));
+      save();
+      updateHeader();
+      renderList();
+      showBackupMsg(`✅ Завантажено ${tickets.length} заявок з фото`, 'var(--green)');
+    } catch(err) {
+      showBackupMsg('❌ Помилка: ' + err.message, 'var(--coral)');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function showBackupMsg(text, color) {
+  const el = document.getElementById('backup-msg');
+  el.textContent = text;
+  el.style.color = color;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+renderList();
+</script>
+</body>
+</html>

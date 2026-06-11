@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veladis — Нова заявка</title>
+<style>
+  :root {
+    --deep: #0D2B3E; --steel: #2C5F7A; --frost: #A8D5E8;
+    --surface: #F0F7FB; --border: #C8E0EC; --text: #0D2B3E;
+    --muted: #5A7D8E; --white: #FFFFFF; --green: #2A9D5C; --coral: #E85C3A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--deep); color: var(--white);
+    padding: 16px 20px; text-align: center;
+  }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header p { font-size: 12px; color: var(--frost); margin-top: 3px; }
+
+  .container { max-width: 520px; margin: 0 auto; padding: 20px 16px; }
+
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  input, select, textarea {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border);
+    border-radius: 9px; font-size: 14px; color: var(--text);
+    background: var(--surface); font-family: inherit; transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--steel); background: var(--white); }
+  textarea { resize: vertical; min-height: 90px; }
+
+  .btn {
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    background: var(--steel); color: var(--white);
+    transition: background 0.15s; margin-top: 6px;
+  }
+  .btn:hover { background: var(--deep); }
+  .btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .success {
+    display: none; text-align: center; padding: 32px 20px;
+  }
+  .success-icon { font-size: 56px; margin-bottom: 12px; }
+  .success h2 { font-size: 20px; color: var(--green); margin-bottom: 8px; }
+  .success p { font-size: 14px; color: var(--muted); }
+  .success .new-btn {
+    display: inline-block; margin-top: 20px; padding: 12px 28px;
+    background: var(--steel); color: var(--white); border-radius: 10px;
+    font-weight: 700; font-size: 14px; cursor: pointer; border: none;
+  }
+
+  .error-msg { color: var(--coral); font-size: 13px; margin-top: 8px; text-align: center; display:none; }
+
+  .priority-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .priority-opt { display: none; }
+  .priority-opt + label {
+    display: block; text-align: center; padding: 10px 6px;
+    border: 2px solid var(--border); border-radius: 9px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    color: var(--muted); background: var(--surface);
+    text-transform: none; letter-spacing: 0;
+    transition: all 0.15s;
+  }
+  .priority-opt:checked + label { border-color: var(--steel); background: var(--steel); color: var(--white); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧊 Veladis Сервіс</h1>
+  <p>Форма подачі заявки на ремонт</p>
+</header>
+
+<div class="container">
+
+  <div id="form-section" class="card">
+
+    <div class="field">
+      <label>Ваше ім'я / інженер *</label>
+      <input type="text" id="f-engineer" placeholder="Іванов Іван">
+    </div>
+
+    <div class="field">
+      <label>Магазин *</label>
+      <select id="f-shop" onchange="loadEquip()">
+        <option value="">Оберіть магазин</option>
+        <option value="0">Бажана 16Д, Київ</option>
+        <option value="1">Малишка 4Д, Київ</option>
+        <option value="2">Стуса 52, Вишневе</option>
+        <option value="3">Березнева 12, Київ</option>
+        <option value="4">Бірюкова 2А, Буча</option>
+        <option value="5">Нижній Вал 11, Київ</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Обладнання *</label>
+      <select id="f-equip">
+        <option value="">Спочатку оберіть магазин</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Тип несправності *</label>
+      <select id="f-type">
+        <option value="">Оберіть тип</option>
+        <option>Не тримає температуру</option>
+        <option>Витік холодоагенту</option>
+        <option>Компресор не запускається</option>
+        <option>Шум / вібрація</option>
+        <option>Обмерзання випарника</option>
+        <option>Несправність ТЕНу</option>
+        <option>Погана циркуляція повітря</option>
+        <option>Планове ТО</option>
+        <option>Інше</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Пріоритет</label>
+      <div class="priority-row">
+        <div>
+          <input type="radio" name="priority" id="p-high" value="high" class="priority-opt">
+          <label for="p-high">🔴 Високий</label>
+        </div>
+        <div>
+          <input type="radio" name="priority" id="p-medium" value="medium" class="priority-opt" checked>
+          <label for="p-medium">🟡 Середній</label>
+        </div>
+        <div>
+          <input type="radio" name="priority" id="p-low" value="low" class="priority-opt">
+          <label for="p-low">🟢 Низький</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Опис проблеми</label>
+      <textarea id="f-desc" placeholder="Опишіть симптоми: яка температура, коли почалось, що робили..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Контактний телефон</label>
+      <input type="tel" id="f-contact" placeholder="+380...">
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submitTicket()">📨 Відправити заявку</button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div id="success-section" class="success">
+    <div class="success-icon">✅</div>
+    <h2>Заявку відправлено!</h2>
+    <p id="success-text">Ваша заявка прийнята і з'явиться у керівника.</p>
+    <button class="new-btn" onclick="resetForm()">+ Нова заявка</button>
+  </div>
+
+</div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwk-o7yW0QsZKIo9gBRXR-uEE68DOptYz7f7oQ6a2bRrNLjhhqrlR4-GCs7DOcH5an7/exec';
+
+const SHOPS = [
+  { name: 'Veladis — Бажана 16Д',  address: 'м. Київ, просп. Миколи Бажана 16Д' },
+  { name: 'Veladis — Малишка 4Д',  address: 'м. Київ, вул. Андрія Малишка 4Д' },
+  { name: 'Veladis — Стуса 52',    address: 'м. Вишневе, вул. Василя Стуса 52' },
+  { name: 'Veladis — Березнева 12',address: 'м. Київ, вул. Березнева 12' },
+  { name: 'Veladis — Бірюкова 2А', address: 'м. Буча, бульв. Леоніда Бірюкова 2А' },
+  { name: 'Veladis — Нижній Вал 11',address: 'м. Київ, Нижній Вал 11' },
+];
+
+const EQUIPMENT = [
+  [
+    {inv:'А41215',name:'Шафа Технохолод Техас 1400 л, холодильна'},
+    {inv:'А40685',name:'Апарат Tecnodom ATT05, шокова заморозка'},
+    {inv:'А40696',name:'Льодогенератор Brema G1000А'},
+    {inv:'А40688',name:'Камера 4.08×2.82×2.20м, холодильна, USK-Bud 80'},
+    {inv:'А40689',name:'Камера 4.38×3.10×2.24м, морозильна, USK-Bud 100'},
+    {inv:'А40690',name:'Камера 5.12×2.91×2.20м, холодильна, USK-Bud 80'},
+    {inv:'А40691',name:'Ларь Montreal ECO XL 2500 (-) морозильний #1'},
+    {inv:'А40692',name:'Ларь Montreal ECO XL 2500 (-) морозильний #2'},
+    {inv:'А40693',name:'Ларь Montreal ECO XL 2500 (-) морозильний #3'},
+    {inv:'А40694',name:'Ларь Montreal ECO XL 2500 (-) морозильний #4'},
+    {inv:'А40695',name:'Ларь Montreal ECO XL 2500 (-) морозильний #5'},
+    {inv:'А40703',name:'Стіл Forcold G-GN2100TN-FC, холодильний'},
+    {inv:'А40704',name:'Стіл Forcold G-GN3100TN-FC, холодильний #1'},
+    {inv:'А40705',name:'Стіл Forcold G-GN3100TN-FC, холодильний #2'},
+    {inv:'А40706',name:'Стіл Forcold G-GN2100BT-FC, морозильний'},
+    {inv:'А40707',name:'Стіл Forcold G-PS300-FC (саладетта) #1'},
+    {inv:'А40708',name:'Стіл Forcold G-PS300-FC (саладетта) #2'},
+    {inv:'А40709',name:'Стіл Forcold G-PS300-FC (саладетта) #3'},
+    {inv:'А40710',name:'Стіл Forcold G-PS300-FC (саладетта) #4'},
+    {inv:'А40711',name:'Стіл Forcold G-PS300-FC (саладетта) #5'},
+    {inv:'А40714',name:'Вітрина GRACIA 2.5'},
+    {inv:'А40715',name:'Вітрина Aura Slim 1.25'},
+    {inv:'А40716',name:'Вітрина GRACIA D-M 2.5 #1'},
+    {inv:'А40717',name:'Вітрина GRACIA D-M 2.5 #2'},
+    {inv:'А40718',name:'Вітрина GRACIA D 1.56 #1'},
+    {inv:'А40719',name:'Вітрина GRACIA D 1.56 #2'},
+    {inv:'А40722',name:'Вітрина AURA-M 1.88'},
+    {inv:'А40723',name:'Вітрина AURA-M 1.25'},
+    {inv:'А41038',name:'Вітрина Aura Slim 1.25 (горка)'},
+    {inv:'ТФ1040069',name:'Шафа Forcar G-GN650TN-FC'},
+    {inv:'ТФ1040071',name:'Шафа Tecnodom AF06EKOMTN'},
+  ],
+  [
+    {inv:'А40840',name:'Вітрина AURA Slim 2.5 (4 рівні)'},
+    {inv:'А40841',name:'Вітрина AURA Slim 2.5 (5 рівнів)'},
+    {inv:'А40842',name:'Вітрина GRACIA 1.56'},
+    {inv:'А40843',name:'Вітрина GRACIA 1.88'},
+    {inv:'А40844',name:'Вітрина GRACIA D 1.56'},
+    {inv:'А40845',name:'Вітрина GRACIA D 1.88'},
+    {inv:'А40847',name:'Камера 4800×4030×2700мм, морозильна'},
+    {inv:'А40848',name:'Камера 5340×2375×2660мм, холодильна'},
+    {inv:'А40849',name:'Камера 6220×2235×2660мм, холодильна'},
+    {inv:'А40850',name:'Ларь PARIS 250 (-) #1'},
+    {inv:'А40851',name:'Ларь PARIS 250 (-) #2'},
+    {inv:'А40852',name:'Ларь PARIS 250 (-) #3'},
+    {inv:'А40853',name:'Ларь PARIS 250 (-) #4'},
+    {inv:'А40854',name:'Ларь PARIS 250 (-) #5'},
+    {inv:'А40858',name:'Стіл Forcold G-GN2100TN-FC'},
+    {inv:'А40859',name:'Стіл Tecnodom TF02MIDGN'},
+    {inv:'А40903',name:'Льодогенератор Brema G1000А'},
+    {inv:'А60125',name:'Стіл Forcar G-PS200 піцерійний #1'},
+    {inv:'А60126',name:'Стіл Forcar G-PS200 піцерійний #2'},
+    {inv:'А60127',name:'Стіл Forcar G-PS300 піцерійний'},
+    {inv:'А60128',name:'Стіл Forcar G-S901 піцерійний'},
+  ],
+  [
+    {inv:'А40662',name:'Стіл Forcold G-PS300-FC (саладетта)'},
+    {inv:'А40928',name:'Вітрина AURA Slim 2.5 (4 рівні)'},
+    {inv:'А40929',name:'Вітрина AURA Slim 2.5 (5 рівнів)'},
+    {inv:'А40930',name:'Вітрина Gracia D 0.94 #1'},
+    {inv:'А40931',name:'Вітрина Gracia D 0.94 #2'},
+    {inv:'А40932',name:'Вітрина GRACIA D 2.5 (права)'},
+    {inv:'А40933',name:'Вітрина Gracia D 2.5 (ліва)'},
+    {inv:'А40936',name:'Ларь PARIS 250 (-) #1'},
+    {inv:'А40937',name:'Ларь PARIS 250 (-) #2'},
+    {inv:'А40938',name:'Ларь PARIS 250 (-) #3'},
+    {inv:'А40939',name:'Ларь PARIS 250 (-) #4'},
+    {inv:'А40940',name:'Ларь PARIS 250 (-) #5'},
+    {inv:'А40941',name:'Льодогенератор Brema G1000А'},
+    {inv:'А40945',name:'Стіл Forcar G-PS200 #1'},
+    {inv:'А40946',name:'Стіл Forcar G-PS200 #2'},
+    {inv:'А40947',name:'Стіл Forcar G-S901 піцерійний'},
+    {inv:'А40950',name:'Камера 2200×3100×2600мм, холодильна'},
+    {inv:'А40951',name:'Камера 3700×3100×2600мм, холодильна'},
+    {inv:'А40952',name:'Камера 4500×4500×2600мм, морозильна'},
+    {inv:'А40954',name:'Стіл Forcar G-GN2200TN'},
+    {inv:'ТФ1040061',name:'Стіл морозильний Forcar G-GN2100BT'},
+  ],
+  [
+    {inv:'А40968',name:'Льодогенератор Brema G510AHC'},
+    {inv:'А41196',name:'Стіл REEDNEE S901'},
+    {inv:'А41180',name:'Стіл Tehma 1400мм саладетта з кришкою'},
+    {inv:'А41194',name:'Стіл Forcold G-PS200-FC (саладета) #1'},
+    {inv:'А41195',name:'Стіл Forcold G-PS200-FC (саладета) #2'},
+    {inv:'А41199',name:'Шафа Tecnodom P-AFD14TN-B-PK #1'},
+    {inv:'А41200',name:'Шафа Tecnodom P-AFD14TN-B-PK #2'},
+    {inv:'А41205',name:'Вітрина Missouri AC120 SBA-125 (ліва)'},
+    {inv:'А41207',name:'Вітрина Missouri AC120 SBA-250'},
+    {inv:'А41198',name:'Шафа REEDNEE LG320S барний'},
+    {inv:'А41206',name:'Вітрина Missouri AC120 SBA-187 (права)'},
+    {inv:'А41181',name:'Стіл Tehma 1400мм'},
+    {inv:'А41182',name:'Скриня M800S Juka #1'},
+    {inv:'А41183',name:'Скриня M800S Juka #2'},
+    {inv:'А116870',name:'Повітроохолоджувач TEHMA TGSB-391E'},
+    {inv:'А116871',name:'Повітроохолоджувач ТЕНМА TGS-291E'},
+  ],
+  [
+    {inv:'А41236',name:'Льодогенератор Brema G510AHC'},
+    {inv:'А41251',name:'Вітрина Missouri AC120 SBA-187 (ліва)'},
+    {inv:'А41242',name:'Стіл Forcold G-PS200-FC (саладета)'},
+    {inv:'А41239',name:'Стіл Tehma 1400мм #1'},
+    {inv:'А41240',name:'Стіл Tehma 1400мм #2'},
+    {inv:'А41245',name:'Шафа Forcold G-GN650TN-FC'},
+    {inv:'А41243',name:'Стіл REEDNEE S901'},
+    {inv:'А41250',name:'Вітрина Missouri AC120 SBA-125 (права)'},
+    {inv:'А41253',name:'Скриня M800S Juka #1'},
+    {inv:'А41254',name:'Скриня M800S Juka #2'},
+    {inv:'А41255',name:'Скриня M800S Juka #3'},
+    {inv:'А41256',name:'Скриня M800S Juka #4'},
+    {inv:'А41257',name:'Скриня M800S Juka #5'},
+    {inv:'А41258',name:'Скриня M800S Juka #6'},
+    {inv:'А41252',name:'Вітрина Missouri AC120 SBA-250'},
+    {inv:'А41241',name:'Стіл Tehma 1400мм саладетта з кришкою'},
+    {inv:'А41247',name:'Система Gratas GS-14 середньотемп. #1'},
+    {inv:'А41248',name:'Система Gratas GS-14 середньотемп. #2'},
+    {inv:'А41246',name:'Система Gratas GF-20 низькотемп.'},
+  ],
+  [
+    {inv:'А41270',name:'Бункер Brema Bin240'},
+    {inv:'А41275',name:'Вітрина Indiana medium AV.070'},
+    {inv:'А41276',name:'Вітрина Missouri AC120 SBA-125 (ліва)'},
+    {inv:'А41277',name:'Вітрина Missouri AC120 SBA-187 (права)'},
+    {inv:'А41278',name:'Вітрина Missouri AC120 SBA-250'},
+    {inv:'А41283',name:'Льодогенератор Brema G510AHC'},
+    {inv:'А41279',name:'Скриня PARIS 250 (-) #1'},
+    {inv:'А41280',name:'Скриня PARIS 250 (-) #2'},
+    {inv:'А41281',name:'Скриня PARIS 250 (-) #3'},
+    {inv:'А41282',name:'Скриня PARIS 250 (-) #4'},
+    {inv:'А41286',name:'Стіл Tehma 1400мм #1'},
+    {inv:'А41287',name:'Стіл Tehma 1400мм #2'},
+    {inv:'А41288',name:'Стіл Tehma 1400мм #3'},
+    {inv:'А41291',name:'Стіл REEDNEE S901'},
+    {inv:'А41293',name:'Шафа Forcold G-GN650TN-FC'},
+  ],
+];
+
+function loadEquip() {
+  const idx = document.getElementById('f-shop').value;
+  const sel = document.getElementById('f-equip');
+  if (!idx && idx !== '0') { sel.innerHTML = '<option value="">Спочатку оберіть магазин</option>'; return; }
+  const items = EQUIPMENT[parseInt(idx)];
+  sel.innerHTML = '<option value="">Оберіть обладнання</option>' +
+    items.map(e => `<option value="${e.inv}">[${e.inv}] ${e.name}</option>`).join('');
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function submitTicket() {
+  const engineer = document.getElementById('f-engineer').value.trim();
+  const shopIdx = document.getElementById('f-shop').value;
+  const equipVal = document.getElementById('f-equip').value;
+  const type = document.getElementById('f-type').value;
+  const priority = document.querySelector('input[name="priority"]:checked').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  const contact = document.getElementById('f-contact').value.trim();
+
+  if (!engineer) { showError('Введіть ваше ім\'я'); return; }
+  if (!shopIdx && shopIdx !== '0') { showError('Оберіть магазин'); return; }
+  if (!type) { showError('Оберіть тип несправності'); return; }
+
+  const shop = SHOPS[parseInt(shopIdx)];
+  let equipName = '';
+  if (equipVal) {
+    const found = EQUIPMENT[parseInt(shopIdx)].find(e => e.inv === equipVal);
+    if (found) equipName = `[${found.inv}] ${found.name}`;
+  }
+
+  const ticket = {
+    id: 'ЗВ-' + String(Date.now()).slice(-5),
+    date: new Date().toISOString().split('T')[0],
+    shopName: shop.name,
+    shopAddress: shop.address,
+    equip: equipName,
+    type, priority, desc, contact, engineer,
+    status: 'new'
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = '⏳ Відправляємо...';
+  btn.disabled = true;
+
+  try {
+    // Save to Firebase
+    const FIREBASE_URL = 'https://veladis-crm-default-rtdb.firebaseio.com';
+    const res = await fetch(FIREBASE_URL + '/tickets.json');
+    const existing = await res.json();
+    const arr = Array.isArray(existing) ? existing : [];
+    arr.unshift(ticket);
+    await fetch(FIREBASE_URL + '/tickets.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(arr)
+    });
+    // Also send to Google Sheets
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ticket)
+    }).catch(()=>{});
+
+    document.getElementById('form-section').style.display = 'none';
+    const s = document.getElementById('success-section');
+    s.style.display = 'block';
+    document.getElementById('success-text').textContent =
+      `Заявка ${ticket.id} від ${engineer} прийнята. Керівник отримає її при наступній синхронізації.`;
+
+  } catch(e) {
+    showError('Помилка відправки. Перевірте інтернет.');
+    btn.textContent = '📨 Відправити заявку';
+    btn.disabled = false;
+  }
+}
+
+function resetForm() {
+  document.getElementById('form-section').style.display = 'block';
+  document.getElementById('success-section').style.display = 'none';
+  document.getElementById('submit-btn').textContent = '📨 Відправити заявку';
+  document.getElementById('submit-btn').disabled = false;
+  ['f-engineer','f-desc','f-contact'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-shop').value = '';
+  document.getElementById('f-equip').innerHTML = '<option value="">Спочатку оберіть магазин</option>';
+  document.getElementById('f-type').value = '';
+  document.getElementById('p-medium').checked = true;
+}
+</script>
+</body>
+</html>
