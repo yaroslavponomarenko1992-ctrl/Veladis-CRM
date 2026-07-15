@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEATERS — Замовлення ТЕН</title>
+<style>
+  :root {
+    --steel: #1C3F5E;
+    --accent: #E8521A;
+    --warm: #F5F0EA;
+    --border: #D0C8BE;
+    --text: #1a1a1a;
+    --muted: #6B6560;
+    --white: #FFFFFF;
+    --success: #2A7A4B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Arial', sans-serif; background: var(--warm); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--steel);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+  .logo span { color: var(--accent); }
+  header p { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 3px; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--steel) 0%, #2D5F85 100%);
+    padding: 36px 24px 32px;
+    color: #fff;
+    text-align: center;
+  }
+  .hero h1 { font-size: 24px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .hero p { font-size: 14px; opacity: 0.8; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+
+  /* CONTAINER */
+  .container { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  /* SECTION */
+  .section { background: var(--white); border-radius: 14px; padding: 22px 20px; margin-bottom: 16px; border: 1px solid var(--border); }
+  .section-title {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--steel);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* FORM */
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  input[type=text], input[type=email], input[type=tel], input[type=number], select, textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    background: #FAFAF8;
+    color: var(--text);
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--steel);
+    background: #fff;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:480px){ .row2 { grid-template-columns: 1fr; } }
+
+  /* SHAPE SELECTOR */
+  .shape-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  @media(max-width:480px){ .shape-grid { grid-template-columns: repeat(3,1fr); } }
+  .shape-item input[type=radio] { display: none; }
+  .shape-item label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 6px 8px;
+    cursor: pointer;
+    background: #FAFAF8;
+    transition: all 0.15s;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    gap: 6px;
+  }
+  .shape-item input[type=radio]:checked + label {
+    border-color: var(--accent);
+    background: #FEF0EA;
+    color: var(--accent);
+  }
+  .shape-icon { font-size: 24px; line-height: 1; }
+
+  /* HINT */
+  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  /* SUBMIT */
+  .submit-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+    margin-top: 8px;
+  }
+  .submit-btn:hover { background: #C84415; }
+
+  .contact-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+  .contact-note a { color: var(--steel); font-weight: 700; }
+
+  /* SUCCESS */
+  #success {
+    display: none;
+    background: #EAF7EF;
+    border: 2px solid var(--success);
+    border-radius: 14px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  #success h2 { color: var(--success); font-size: 20px; margin-bottom: 8px; }
+  #success p { font-size: 14px; color: #444; line-height: 1.6; }
+
+  /* REQUIRED */
+  .req { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">HEAT<span>E</span>RS</div>
+    <p>Виробництво трубчастих електронагрівачів</p>
+  </div>
+  <div style="text-align:right;font-size:12px;color:rgba(255,255,255,0.7)">
+    📧 heaters.kiev@gmail.com
+  </div>
+</header>
+
+<div class="hero">
+  <h1>Замовлення ТЕН</h1>
+  <p>Заповніть форму — вкажіть відомі вам параметри. Наш менеджер зв'яжеться з вами для уточнення деталей і виставлення рахунку.</p>
+</div>
+
+<div class="container">
+
+  <div id="success">
+    <h2>✅ Заявку отримано!</h2>
+    <p>Дякуємо за замовлення. Наш менеджер зв'яжеться з вами протягом робочого дня для уточнення деталей і виставлення рахунку.<br><br>
+    З питаннями: <strong>heaters.kiev@gmail.com</strong></p>
+  </div>
+
+  <form id="order-form">
+
+    <!-- КЛІЄНТ -->
+    <div class="section">
+      <div class="section-title">👤 Дані клієнта</div>
+      <div class="field">
+        <label>Назва організації / ПІБ <span class="req">*</span></label>
+        <input type="text" id="org" placeholder="ТОВ «Назва» або Іванов Іван Іванович" required>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Контактна особа</label>
+          <input type="text" id="contact" placeholder="Ім'я та прізвище">
+        </div>
+        <div class="field">
+          <label>Посада</label>
+          <input type="text" id="position" placeholder="Інженер, директор...">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Телефон <span class="req">*</span></label>
+          <input type="tel" id="phone" placeholder="+380..." required>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="email@company.ua">
+        </div>
+      </div>
+    </div>
+
+    <!-- ФОРМА ТЕН -->
+    <div class="section">
+      <div class="section-title">🔄 Форма ТЕН</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Якщо знаєте — вкажіть варіант (Ф1–Ф15 з бланку). Якщо не знаєте — просто прикріпіть фото нижче, ми самі визначимо.
+      </p>
+      <div class="field">
+        <label>Варіант форми (якщо відомо)</label>
+        <select id="shape-select">
+          <option value="">Не знаю / визначте за фото</option>
+          <option>Ф1 — прямий</option>
+          <option>Ф2 — U-подібний</option>
+          <option>Ф3 — U з ребрами</option>
+          <option>Ф4 — подвійний U</option>
+          <option>Ф5 — Y-подібний (вилка)</option>
+          <option>Ф6 — П-подібний</option>
+          <option>Ф7 — спіральний</option>
+          <option>Ф8 — кільцевий</option>
+          <option>Ф9 — котушка</option>
+          <option>Ф10 — з пластинами</option>
+          <option>Ф11 — складний зигзаг</option>
+          <option>Ф12 — інвертований U</option>
+          <option>Ф13 — C-подібний</option>
+          <option>Ф14 — арка</option>
+          <option>Ф15 — паралельний</option>
+          <option>Патронний ТЕН (циліндричний)</option>
+          <option>Ф8 — кільцевий (міканітовий / керамічний)</option>
+          <option>Плоский міканітовий нагрівач</option>
+          <option>Інший варіант</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- КІЛЬЦЕВИЙ ТЕН -->
+    <div class="section" id="ring-section" style="display:none">
+      <div class="section-title">⭕ Параметри кільцевого нагрівача</div>
+      <div class="field">
+        <label>Тип</label>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+            <input type="radio" name="ring-type" value="Міканітовий (хомутовий)" style="width:18px;height:18px"> Міканітовий (хомутовий)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+            <input type="radio" name="ring-type" value="Керамічний" style="width:18px;height:18px"> Керамічний
+          </label>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Внутрішній діаметр (мм)</label>
+          <input type="text" id="ring-inner" placeholder="25–380 мм">
+        </div>
+        <div class="field">
+          <label>Ширина (мм)</label>
+          <input type="text" id="ring-width" placeholder="20–300 мм">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Потужність (Вт)</label>
+          <input type="text" id="ring-power" placeholder="напр. 500 Вт">
+        </div>
+        <div class="field">
+          <label>Напруга (В)</label>
+          <select id="ring-voltage">
+            <option value="">Оберіть...</option>
+            <option>12 В</option>
+            <option>24 В</option>
+            <option>48 В</option>
+            <option>110 В</option>
+            <option>220 В</option>
+            <option>230 В</option>
+            <option>400 В</option>
+            <option>Інший варіант</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Тип виводів</label>
+        <select id="ring-lead-type" onchange="toggleRingLead(this.value)">
+          <option value="">Оберіть...</option>
+          <option value="wire">Дротові виводи</option>
+          <option value="stud">Контакти під шпильку</option>
+          <option value="terminal">Колодка клемна</option>
+        </select>
+      </div>
+      <div class="field" id="ring-lead-length-wrap" style="display:none">
+        <label>Довжина виводів (мм)</label>
+        <input type="text" id="ring-lead" placeholder="напр. 200 мм">
+      </div>
+    </div>
+
+    <!-- ПАТРОННИЙ ТЕН -->
+    <div class="section" id="patron-section" style="display:none">
+      <div class="section-title">🔩 Параметри патронного (пальчикового) ТЕН</div>
+      <div class="row2">
+        <div class="field">
+          <label>Діаметр (мм)</label>
+          <input type="text" id="patron-diameter" placeholder="3–50 мм">
+        </div>
+        <div class="field">
+          <label>Довжина (мм)</label>
+          <input type="text" id="patron-length" placeholder="50–1300 мм">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Потужність (Вт)</label>
+          <input type="text" id="patron-power" placeholder="напр. 300 Вт">
+        </div>
+        <div class="field">
+          <label>Напруга (В)</label>
+          <select id="patron-voltage">
+            <option value="">Оберіть...</option>
+            <option>12 В</option>
+            <option>24 В</option>
+            <option>48 В</option>
+            <option>110 В</option>
+            <option>220 В</option>
+            <option>230 В</option>
+            <option>400 В</option>
+            <option>Інший варіант</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Матеріал корпусу</label>
+        <select id="patron-material">
+          <option value="">Оберіть...</option>
+          <option>Нержавіюча сталь</option>
+          <option>Латунь</option>
+          <option>Інший варіант</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Тип виводів</label>
+        <select id="patron-lead-type" onchange="togglePatronLead(this.value)">
+          <option value="">Оберіть...</option>
+          <option value="wire">Дротові виводи</option>
+          <option value="stud">Контакти під шпильку</option>
+          <option value="terminal">Колодка клемна</option>
+        </select>
+      </div>
+      <div class="field" id="patron-lead-length-wrap" style="display:none">
+        <label>Довжина виводів (мм)</label>
+        <input type="text" id="patron-lead-length" placeholder="напр. 300 мм">
+      </div>
+      <div class="field">
+        <label>Середовище нагріву</label>
+        <select id="patron-medium">
+          <option value="">Оберіть...</option>
+          <option>Метал (прес-форма, литво)</option>
+          <option>Масло</option>
+          <option>Вода</option>
+          <option>Газ</option>
+          <option>Інший варіант</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ПАРАМЕТРИ -->
+    <div class="section">
+      <div class="section-title">⚡ Технічні параметри</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Кількість штук <span class="req">*</span></label>
+          <input type="number" id="qty" placeholder="напр. 10" min="1" required>
+        </div>
+        <div class="field">
+          <label>Напруга (В)</label>
+          <select id="voltage">
+            <option value="">Оберіть...</option>
+            <option>12 В</option>
+            <option>24 В</option>
+            <option>36 В</option>
+            <option>42 В</option>
+            <option>48 В</option>
+            <option>60 В</option>
+            <option>127 В</option>
+            <option>220 В</option>
+            <option>380 В</option>
+            <option>Інший варіант</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Потужність (Вт)</label>
+          <input type="text" id="power" placeholder="напр. 1500">
+        </div>
+        <div class="field">
+          <label>Діаметр трубки (мм)</label>
+          <select id="diameter">
+            <option value="">Оберіть...</option>
+            <option>6.5 мм</option>
+            <option>7.4 мм</option>
+            <option>8.0 мм</option>
+            <option>8.5 мм</option>
+            <option>10 мм</option>
+            <option>13 мм</option>
+            <option>16 мм</option>
+            <option>18 мм</option>
+            <option>Інший варіант</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Матеріал оболонки ТЕН</label>
+        <select id="material">
+          <option value="">Оберіть...</option>
+          <option>Нержавіюча сталь</option>
+          <option>Вуглецева сталь</option>
+          <option>Титан</option>
+          <option>Нержавіюча сталь з безшовної трубки</option>
+          <option>Інший варіант</option>
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Штуцер</label>
+          <select id="fitting">
+            <option value="">Оберіть...</option>
+            <option>G ½</option>
+            <option>M10</option>
+            <option>M12</option>
+            <option>M14</option>
+            <option>M16</option>
+            <option>M18</option>
+            <option>M20</option>
+            <option>M22</option>
+            <option>Без штуцера</option>
+            <option>Інший варіант</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Матеріал штуцера</label>
+          <select id="fitting-material">
+            <option value="">Оберіть...</option>
+            <option>Нержавіюча сталь</option>
+            <option>Вуглецева сталь</option>
+            <option>Титан</option>
+            <option>Латунь</option>
+            <option>Інший варіант</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Робоче середовище</label>
+        <select id="medium">
+          <option value="">Оберіть...</option>
+          <option>Вода (спокійна)</option>
+          <option>Вода (рухома)</option>
+          <option>Повітря (спокійне)</option>
+          <option>Повітря (рухоме)</option>
+          <option>Металеві форми</option>
+          <option>Жири та масла</option>
+          <option>Агресивне середовище</option>
+          <option>Інший варіант</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Довжина контактного стержня в заробці</label>
+        <select id="rod-length">
+          <option value="">Оберіть...</option>
+          <option>A — 40 мм (стандарт)</option>
+          <option>B — 65 мм</option>
+          <option>C — 100 мм</option>
+          <option>D — 120 мм</option>
+          <option>E — 160 мм</option>
+          <option>F — 250 мм</option>
+          <option>G — 400 мм</option>
+          <option>H — 630 мм</option>
+          <option>Інший варіант</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Розгорнута довжина ТЕН (мм)</label>
+        <input type="text" id="total-length" placeholder="напр. 1200 мм — повна довжина трубки в розгорнутому вигляді">
+        <p class="hint">Загальна довжина трубки якщо її випрямити</p>
+      </div>
+    </div>
+
+    <!-- РОЗМІРИ -->
+    <div class="section">
+      <div class="section-title">📐 Розміри</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Вкажіть розміри у вільній формі — наприклад: <em>«довжина 300 мм, ширина 150 мм, радіус вигину 50 мм»</em>.<br>
+        Або просто прикріпіть фото з лінійкою — ми самі зніміємо розміри.
+      </p>
+      <div class="field">
+        <label>Розміри (у вільній формі)</label>
+        <textarea id="dimensions" placeholder="Наприклад: загальна довжина 350 мм, ширина 120 мм, висота 80 мм, діаметр вигину 40 мм..."></textarea>
+      </div>
+    </div>
+
+    <!-- НАЗВА ТА ДОДАТКОВО -->
+    <div class="section">
+      <div class="section-title">📝 Додаткова інформація</div>
+      <div class="field">
+        <label>Найменування / марка / позначення ТЕН</label>
+        <input type="text" id="ten-name" placeholder="якщо відомо">
+      </div>
+      <div class="field">
+        <label>Додаткові побажання або коментарі</label>
+        <textarea id="comment" placeholder="Будь-яка додаткова інформація: призначення ТЕН, умови роботи, терміни, особливі вимоги..."></textarea>
+      </div>
+    </div>
+
+    
+    <!-- ФОТО ЗРАЗКА -->
+    <div class="section">
+      <div class="section-title">📷 Фото зразка</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Додайте фото вашого ТЕН або схему — це допоможе нам точніше підібрати параметри</p>
+      <div class="field">
+        <label for="photos">Фото / зображення (до 5 шт.)</label>
+        <input type="file" id="photos" accept="image/*" multiple style="padding:8px;background:#FAFAF8">
+        <p class="hint">JPG, PNG, HEIC — до 10 МБ кожне</p>
+      </div>
+      <div id="photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+    </div>
+
+<button type="submit" class="submit-btn">📨 Надіслати замовлення</button>
+
+    <p class="contact-note">
+      Після відправки ми зв'яжемося з вами для уточнення деталей та виставлення рахунку.<br>
+      Питання? <a href="mailto:heaters.kiev@gmail.com">heaters.kiev@gmail.com</a>
+    </p>
+
+  </form>
+</div>
+
+<script>
+function toggleRingLead(val) {
+  document.getElementById('ring-lead-length-wrap').style.display = 
+    val === 'wire' ? 'block' : 'none';
+}
+
+function togglePatronLead(val) {
+  document.getElementById('patron-lead-length-wrap').style.display =
+    val === 'wire' ? 'block' : 'none';
+}
+
+function toggleFlatLead(val) {
+  document.getElementById('flat-lead-length-wrap').style.display =
+    val === 'wire' ? 'block' : 'none';
+}
+
+// Show/hide special sections based on shape selection
+document.getElementById('shape-select').addEventListener('change', function() {
+  document.getElementById('patron-section').style.display =
+    this.value.includes('Патронний') ? 'block' : 'none';
+  document.getElementById('ring-section').style.display =
+    this.value.includes('кільцевий') || this.value.includes('Ф8') ? 'block' : 'none';
+  document.getElementById('flat-section').style.display =
+    this.value.includes('Плоский') ? 'block' : 'none';
+});
+
+const BOT_TOKEN = '8984365760:AAHNMefS9Z-b3nKr1GsWpIBfQtWxLEb8Dmg';
+const CHAT_IDS = ['399419960', '1293322309'];
+
+// Photo preview
+document.getElementById('photos').addEventListener('change', function() {
+  const preview = document.getElementById('photo-preview');
+  preview.innerHTML = '';
+  Array.from(this.files).slice(0,5).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid var(--border)';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+async function sendFilledBlank() {
+  const org = document.getElementById('org').value;
+  const contact = document.getElementById('contact').value || '—';
+  const position = document.getElementById('position').value || '—';
+  const phone = document.getElementById('phone').value;
+  const email = document.getElementById('email').value || '—';
+  const shape = document.getElementById('shape-select').value || 'Не вказано';
+  const qty = document.getElementById('qty').value;
+  const voltage = document.getElementById('voltage').value || '—';
+  const power = document.getElementById('power').value || '—';
+  const diameter = document.getElementById('diameter').value || '—';
+  const material = document.getElementById('material').value || '—';
+  const fitting = document.getElementById('fitting').value || '—';
+  const fittingMat = document.getElementById('fitting-material').value || '—';
+  const medium = document.getElementById('medium').value || '—';
+  const rodLen = document.getElementById('rod-length').value || '—';
+  const totalLen = document.getElementById('total-length').value || '—';
+  const dimensions = document.getElementById('dimensions').value || '—';
+  const tenName = document.getElementById('ten-name').value || '—';
+  const comment = document.getElementById('comment').value || '—';
+  const date = new Date().toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit', year:'numeric'});
+
+  const flatLeadType = document.getElementById('flat-lead-type').value;
+  const flatLeadLabel = flatLeadType === 'wire' ? 'Дротові виводи' : flatLeadType === 'stud' ? 'Контакти під шпильку' : flatLeadType === 'terminal' ? 'Колодка клемна' : '—';
+  const flatSection = document.getElementById('flat-section').style.display !== 'none' ? `
+▭ *Плоский міканітовий нагрівач:*
+  • Довжина: ${document.getElementById('flat-length').value || '—'} мм
+  • Ширина: ${document.getElementById('flat-width').value || '—'} мм
+  • Потужність: ${document.getElementById('flat-power').value || '—'} Вт
+  • Напруга: ${document.getElementById('flat-voltage').value || '—'}
+  • Форма: ${document.getElementById('flat-shape').value || '—'}
+  • Тип виводів: ${flatLeadLabel}${flatLeadType === 'wire' ? '\n  • Довжина виводів: ' + (document.getElementById('flat-lead').value || '—') + ' мм' : ''}` : '';
+
+  const ringType = document.querySelector('input[name="ring-type"]:checked');
+  const ringLeadType = document.getElementById('ring-lead-type').value;
+  const ringLeadLabel = ringLeadType === 'wire' ? 'Дротові виводи' : ringLeadType === 'stud' ? 'Контакти під шпильку' : ringLeadType === 'terminal' ? 'Колодка клемна' : '—';
+  const ringSection = (document.getElementById('shape-select').value.includes('кільцевий') || document.getElementById('shape-select').value.includes('Ф8')) ? `
+⭕ *Кільцевий ТЕН:*
+  • Тип: ${ringType ? ringType.value : '—'}
+  • Внутрішній діаметр: ${document.getElementById('ring-inner').value || '—'} мм
+  • Висота/ширина: ${document.getElementById('ring-width').value || '—'} мм
+  • Потужність: ${document.getElementById('ring-power').value || '—'} Вт
+  • Напруга: ${document.getElementById('ring-voltage').value || '—'}
+  • Тип виводів: ${ringLeadLabel}${ringLeadType === 'wire' ? '\n  • Довжина виводів: ' + (document.getElementById('ring-lead').value || '—') + ' мм' : ''}` : '';
+<table>
+  <tr><td colspan="2" class="section-header">Параметри патронного ТЕН</td></tr>
+  <tr><td class="label">Діаметр ТЕН</td><td>${document.getElementById('patron-diameter').value || '—'}</td></tr>
+  <tr><td class="label">Довжина ТЕН</td><td>${document.getElementById('patron-length').value || '—'} мм</td></tr>
+  <tr><td class="label">Штуцер</td><td>${document.getElementById('patron-fitting').value || 'Без штуцера'}</td></tr>
+  <tr><td class="label">Довжина виводів</td><td>${document.getElementById('patron-lead-length').value || '—'} мм</td></tr>
+  <tr><td class="label">Середовище нагріву</td><td>${document.getElementById('patron-medium').value || '—'}</td></tr>
+</table>` : '';
+
+  const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; padding: 20mm 15mm; }
+  h2 { text-align: center; font-size: 14pt; margin-bottom: 4px; }
+  .sub { text-align: center; font-size: 10pt; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  td { border: 1px solid #000; padding: 5px 8px; vertical-align: top; }
+  .label { font-weight: bold; width: 45%; background: #f5f5f5; }
+  .section-header { background: #1C3F5E; color: #fff; font-weight: bold; font-size: 11pt; padding: 6px 8px; }
+  .hint { font-size: 8pt; color: #555; }
+  .footer { margin-top: 20px; font-size: 9pt; color: #555; text-align: center; }
+</style>
+</head><body>
+<h2>Заявка на трубчасті електронагрівачі (ТЕН)</h2>
+<div class="sub">HEATERS · heaters.kiev@gmail.com · Дата: ${date}</div>
+
+<table>
+  <tr><td colspan="2" class="section-header">Дані клієнта</td></tr>
+  <tr><td class="label">Організація / ПІБ</td><td>${org}</td></tr>
+  <tr><td class="label">Контактна особа</td><td>${contact}</td></tr>
+  <tr><td class="label">Посада</td><td>${position}</td></tr>
+  <tr><td class="label">Телефон</td><td>${phone}</td></tr>
+  <tr><td class="label">Email</td><td>${email}</td></tr>
+</table>
+
+<table>
+  <tr><td colspan="2" class="section-header">Параметри ТЕН</td></tr>
+  <tr><td class="label">Найменування / марка</td><td>${tenName}</td></tr>
+  <tr><td class="label">Форма (варіант)</td><td>${shape}</td></tr>
+  <tr><td class="label">Кількість</td><td>${qty} шт.</td></tr>
+  <tr><td class="label">Напруга</td><td>${voltage}</td></tr>
+  <tr><td class="label">Потужність</td><td>${power} Вт</td></tr>
+  <tr><td class="label">Діаметр трубки</td><td>${diameter}</td></tr>
+  <tr><td class="label">Матеріал оболонки</td><td>${material}</td></tr>
+  <tr><td class="label">Штуцер</td><td>${fitting}</td></tr>
+  <tr><td class="label">Матеріал штуцера</td><td>${fittingMat}</td></tr>
+  <tr><td class="label">Робоче середовище</td><td>${medium}</td></tr>
+  <tr><td class="label">Довжина стержня в заробці</td><td>${rodLen}</td></tr>
+  <tr><td class="label">Розгорнута довжина ТЕН</td><td>${totalLen} мм</td></tr>
+</table>
+
+<table>
+  <tr><td colspan="2" class="section-header">Розміри та додаткова інформація</td></tr>
+  <tr><td class="label">Розміри</td><td>${dimensions}</td></tr>
+  <tr><td class="label">Додаткові побажання</td><td>${comment}</td></tr>
+</table>
+${patronSection}
+
+<div class="footer">Заявку отримано через онлайн-форму · heaters.kiev@gmail.com</div>
+</body></html>`;
+
+  // Convert HTML to Blob and send as document
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const file = new File([blob], `Заявка_ТЕН_${org.replace(/[^a-zA-Zа-яА-ЯіІїЇ0-9]/g,'_')}_${date.replace(/\./g,'-')}.html`, { type: 'text/html' });
+
+  await Promise.all(CHAT_IDS.map(chatId => {
+    const fd = new FormData();
+    fd.append('chat_id', chatId);
+    fd.append('document', file);
+    fd.append('caption', `📋 Бланк замовлення ТЕН — ${org}`);
+    return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, { method: 'POST', body: fd });
+  }));
+}
+  const fd = new FormData();
+  fd.append('chat_id', chatId);
+  fd.append('photo', file);
+  fd.append('caption', caption);
+  return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+}
+
+
+document.getElementById('order-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = '⏳ Надсилаємо...';
+  btn.disabled = true;
+
+  const shape = document.getElementById('shape-select');
+  const dims = document.getElementById('dimensions')?.value || '';
+
+  const msg = `🔥 *Нове замовлення ТЕН*
+
+👤 *Клієнт:* ${document.getElementById('org').value}
+👔 Контакт: ${document.getElementById('contact').value || '—'}
+📞 Телефон: ${document.getElementById('phone').value}
+📧 Email: ${document.getElementById('email').value || '—'}
+
+🔄 *Форма ТЕН:* ${shape ? shape.value || 'визначити за фото' : '—'}
+📦 *Кількість:* ${document.getElementById('qty').value} шт.
+⚡ *Напруга:* ${document.getElementById('voltage').value || '—'}
+💡 *Потужність:* ${document.getElementById('power').value || '—'} Вт
+📏 *Діаметр трубки:* ${document.getElementById('diameter').value || '—'}
+🔩 *Матеріал оболонки:* ${document.getElementById('material').value || '—'}
+🔧 *Штуцер:* ${document.getElementById('fitting').value || '—'}
+🔧 *Матеріал штуцера:* ${document.getElementById('fitting-material').value || '—'}
+💧 *Середовище:* ${document.getElementById('medium').value || '—'}
+📌 *Довжина стержня:* ${document.getElementById('rod-length').value || '—'}
+📏 *Розгорнута довжина ТЕН:* ${document.getElementById('total-length').value || '—'} мм
+
+📐 *Розміри:* ${dims || 'визначити за фото'}
+${document.getElementById('patron-section').style.display !== 'none' ? `
+🔩 *Патронний ТЕН:*
+  • Діаметр: ${document.getElementById('patron-diameter').value || '—'} мм
+  • Довжина: ${document.getElementById('patron-length').value || '—'} мм
+  • Потужність: ${document.getElementById('patron-power').value || '—'} Вт
+  • Напруга: ${document.getElementById('patron-voltage').value || '—'}
+  • Матеріал корпусу: ${document.getElementById('patron-material').value || '—'}
+  • Тип виводів: ${document.getElementById('patron-lead-type').value === 'wire' ? 'Дротові, довжина: ' + (document.getElementById('patron-lead-length').value || '—') + ' мм' : document.getElementById('patron-lead-type').value === 'stud' ? 'Під шпильку' : document.getElementById('patron-lead-type').value === 'terminal' ? 'Клемна колодка' : '—'}
+  • Середовище: ${document.getElementById('patron-medium').value || '—'}` : ''}
+${ringSection}
+${flatSection}
+${document.getElementById('patron-section').style.display !== 'none' ? `🔩 *Патронний ТЕН:*
+  Діаметр: ${document.getElementById('patron-diameter').value || '—'}
+  Довжина: ${document.getElementById('patron-length').value || '—'} мм
+  Тип виводу: ${document.getElementById('patron-lead').value || '—'}
+  Довжина виводу: ${document.getElementById('patron-lead-length').value || '—'} мм` : ''}
+🏷 *Назва/марка ТЕН:* ${document.getElementById('ten-name').value || '—'}
+💬 *Коментар:* ${document.getElementById('comment').value || '—'}`;
+
+  try {
+    await Promise.all(CHAT_IDS.map(chatId =>
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown' })
+      })
+    ));
+
+    // Send photos if any
+    const photoFiles = document.getElementById('photos').files;
+    if (photoFiles.length > 0) {
+      const caption = `Фото зразка ТЕН від: ${document.getElementById('org').value}`;
+      await Promise.all(CHAT_IDS.flatMap(chatId =>
+        Array.from(photoFiles).slice(0,5).map(file => sendPhoto(chatId, file, caption))
+      ));
+    }
+
+    // Generate and send filled PDF blank
+    await sendFilledBlank();
+
+    document.getElementById('order-form').style.display = 'none';
+    document.getElementById('success').style.display = 'block';
+    window.scrollTo(0, 0);
+  } catch(err) {
+    btn.textContent = '📨 Надіслати замовлення';
+    btn.disabled = false;
+    alert('Помилка відправки. Спробуйте ще раз або напишіть на heaters.kiev@gmail.com');
+  }
+});
+</script>
+
+</body>
+</html>
