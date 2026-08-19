@@ -570,7 +570,12 @@ const EQUIPMENT = [
     {inv:"СТ30-12514", name:"Камера холодильна №53 (охолодження), СТ30 12514", type:"cold"},
   ],
   // Veladis — Драгоманова 19
-  [],
+  [
+    {inv:'A41362', name:'Стіл 1400x700x850 мм, Tehma, холодильний', type:'cold'},
+    {inv:'A41363', name:'Стіл 1400x700x850 мм, Tehma, холодильний саладетта з кришкою', type:'cold'},
+    {inv:'A41366', name:'Стіл REEDNEE S901, 900x700x860, холодильний', type:'cold'},
+    {inv:'A41368', name:'Шафа Forcold G-GN650TN-FC, холодильний, відкриття праве', type:'cold'},
+  ],
 ];
 
 // ── FIREBASE CONFIG ────────────────────────────────────────────────────
@@ -614,9 +619,22 @@ function loadAllPhotos() {
     req.onsuccess = () => res(req.result || []);
   });
 }
-function deletePhotosDB(ticketId) {
-  const tx = db.transaction('photos', 'readwrite');
-  tx.objectStore('photos').delete(ticketId);
+function saveDefectActs(ticketId, acts) {
+  if (!db) return;
+  return new Promise(res => {
+    const tx = db.transaction('photos', 'readwrite');
+    tx.objectStore('photos').put({ ticketId: ticketId + '_defect', photos: acts });
+    tx.oncomplete = res;
+  });
+}
+
+function loadDefectActs(ticketId) {
+  if (!db) return Promise.resolve([]);
+  return new Promise(res => {
+    const tx = db.transaction('photos', 'readonly');
+    const req = tx.objectStore('photos').get(ticketId + '_defect');
+    req.onsuccess = () => res(req.result ? req.result.photos : []);
+  });
 }
 
 function save() {
@@ -629,8 +647,25 @@ function save() {
 
 async function saveToFirebase() {
   try {
-    const slim = tickets.map(t => { const {photos,...rest} = t; return rest; });
-    await fetch(FIREBASE_URL + '/tickets.json', {
+    // Save each ticket individually by ID — fast regardless of total count
+    const savePromises = tickets.map(t => {
+      const { photos, ...slim } = t;
+      return fetch(FIREBASE_URL + '/tickets/' + t.id + '.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(slim)
+      });
+    });
+    await Promise.all(savePromises);
+  } catch(e) {
+    console.log('Firebase save error:', e);
+  }
+}
+
+async function saveOneToFirebase(ticket) {
+  try {
+    const { photos, ...slim } = ticket;
+    await fetch(FIREBASE_URL + '/tickets/' + ticket.id + '.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(slim)
@@ -640,29 +675,48 @@ async function saveToFirebase() {
   }
 }
 
+async function deleteFromFirebase(id) {
+  try {
+    await fetch(FIREBASE_URL + '/tickets/' + id + '.json', { method: 'DELETE' });
+  } catch(e) {}
+}
+
 async function loadFromFirebase() {
   try {
     const res = await fetch(FIREBASE_URL + '/tickets.json');
     const data = await res.json();
-    if (data && Array.isArray(data) && data.length > 0) {
-      // Merge firebase tickets with local photos
-      const allPhotos = await loadAllPhotos();
-      const photoMap = {};
-      allPhotos.forEach(p => photoMap[p.ticketId] = p.photos);
-      tickets = data.map(t => ({
+    if (!data) return;
+
+    // Support both old array format and new object format
+    let arr = [];
+    if (Array.isArray(data)) {
+      arr = data; // old format
+    } else if (typeof data === 'object') {
+      arr = Object.values(data); // new format
+    }
+
+    if (arr.length === 0) return;
+
+    const allPhotos = await loadAllPhotos();
+    const photoMap = {};
+    allPhotos.forEach(p => photoMap[p.ticketId] = p.photos);
+
+    tickets = arr
+      .filter(t => t && t.id)
+      .map(t => ({
         ...t,
-        // Normalize old status names
         status: t.status === 'in_progress' ? 'progress' : (t.status || 'new'),
         photos: photoMap[t.id] || [],
         parts: (t.parts || []).map(p => ({ ...p, qty: p.qty || 1 })),
         services: (t.services || []).map(s => ({ ...s, qty: s.qty || 1 })),
         history: t.history || []
-      }));
-      localStorage.setItem('crm_veladis', JSON.stringify(data));
-      renderList();
-      updateHeader();
-      showBackupMsg('✅ Синхронізовано з хмарою', 'var(--green)');
-    }
+      }))
+      .sort((a, b) => new Date(b.date + ' ' + (b.time||'')) - new Date(a.date + ' ' + (a.time||'')));
+
+    localStorage.setItem('crm_veladis', JSON.stringify(tickets.map(t => { const {photos,...r}=t; return r; })));
+    renderList();
+    updateHeader();
+    showBackupMsg('✅ Синхронізовано з хмарою', 'var(--green)');
   } catch(e) {
     console.log('Firebase load error:', e);
   }
@@ -1222,12 +1276,23 @@ function updateHeader() {
 
 // ── OPEN TICKET MODAL ──────────────────────────────────────────────────
 function openTicket(id) {
-  const t = tickets.find(x=>x.id===id); if(!t) return;
+  const t = tickets.find(x=>x.id===id);
+  if(!t) { alert('Заявку не знайдено: ' + id + '\nВсього заявок: ' + tickets.length); return; }
   t.parts = t.parts || [];
   t.services = t.services || [];
   t.history = t.history || [];
   t.photos = t.photos || [];
   t.defectActs = Array.isArray(t.defectActs) ? t.defectActs : (t.defectAct ? [t.defectAct] : []);
+
+  // Load defect acts from IndexedDB if empty
+  if (!t.defectActs.length) {
+    loadDefectActs(t.id).then(acts => {
+      if (acts.length) {
+        t.defectActs = acts;
+        renderDefectAct(t);
+      }
+    });
+  }
   currentTicketId = id;
   document.getElementById('modal-title').textContent = `${t.id} — ${t.type}`;
 
@@ -1797,6 +1862,7 @@ function renderDefectAct(t) {
       if (!t || !Array.isArray(t.defectActs)) return;
       t.defectActs.splice(idx, 1);
       save();
+      saveDefectActs(t.id, t.defectActs);
       saveToFirebase();
       renderDefectAct(t);
     });
@@ -1833,6 +1899,7 @@ function addDefectAct(event) {
         processed++;
         if (processed === files.length) {
           save();
+          saveDefectActs(t.id, t.defectActs);
           saveToFirebase();
           renderDefectAct(t);
           event.target.value = '';
