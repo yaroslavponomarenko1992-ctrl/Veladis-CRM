@@ -167,6 +167,7 @@
           <option value="3">Veladis — Березнева 12, Київ</option>
           <option value="4">Veladis — Бірюкова 2А, Буча</option>
           <option value="5">Veladis — Нижній Вал 11, Київ</option>
+          <option value="7">Veladis — Драгоманова 19, Київ</option>
         </optgroup>
         <optgroup label="🟧 МХП">
           <option value="6">МХП — вул. Академіка Заболотного 158, Київ</option>
@@ -318,7 +319,8 @@ const SHOPS = [
   { name: 'Veladis — Стуса 52',    address: 'м. Вишневе, вул. Василя Стуса 52' },
   { name: 'Veladis — Березнева 12',address: 'м. Київ, вул. Березнева 12' },
   { name: 'Veladis — Бірюкова 2А', address: 'м. Буча, бульв. Леоніда Бірюкова 2А' },
-  { name: 'Veladis — Нижній Вал 11',address: 'м. Київ, Нижній Вал 11' },
+  { name: 'Veladis — Нижній Вал 11', address: 'м. Київ, Нижній Вал 11' },
+  { name: 'Veladis — Драгоманова 19', address: 'м. Київ, вул. Драгоманова 19' },
   { name: 'МХП — Центральний офіс', address: 'м. Київ, вул. Академіка Заболотного, 158' },
 ];
 
@@ -471,6 +473,13 @@ const EQUIPMENT = [
     {inv:'00034744', name:'Камера Olis 2, компресори №4 (заморожування), LAIKA EL24', type:'freeze'},
     {inv:"МЦ-09", name:"Камера ICK №9 (заморожування), м'ясний цех", type:"freeze"},
     {inv:"СТ30-12514", name:"Камера холодильна №53 (охолодження), СТ30 12514", type:"cold"},
+  ],
+  // Veladis — Драгоманова 19
+  [
+    {inv:'A41362', name:'Стіл 1400x700x850 мм, Tehma, холодильний', type:'cold'},
+    {inv:'A41363', name:'Стіл 1400x700x850 мм, Tehma, холодильний саладетта з кришкою', type:'cold'},
+    {inv:'A41366', name:'Стіл REEDNEE S901, 900x700x860, холодильний', type:'cold'},
+    {inv:'A41368', name:'Шафа Forcold G-GN650TN-FC, холодильний, відкриття праве', type:'cold'},
   ],
 ];
 
@@ -653,16 +662,13 @@ async function submitTicket() {
   btn.disabled = true;
 
   try {
-    // Save to Firebase
     const FIREBASE_URL = 'https://veladis-crm-default-rtdb.firebaseio.com';
-    const res = await fetch(FIREBASE_URL + '/tickets.json');
-    const existing = await res.json();
-    const arr = Array.isArray(existing) ? existing : [];
-    arr.unshift(ticket);
-    await fetch(FIREBASE_URL + '/tickets.json', {
+
+    // Save ticket directly by ID — fast regardless of total count
+    await fetch(FIREBASE_URL + '/tickets/' + ticket.id + '.json', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(arr)
+      body: JSON.stringify(ticket)
     });
     // Send Telegram notification
     const BOT_TOKEN = '8984365760:AAHNMefS9Z-b3nKr1GsWpIBfQtWxLEb8Dmg';
