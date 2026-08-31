@@ -2096,8 +2096,10 @@ function deleteCurrentTicket() {
   const btn = document.querySelector('.btn-delete-confirm');
   if (btn) {
     // Already showing confirm — do the delete
-    deletePhotosDB(currentTicketId);
-    tickets = tickets.filter(x => x.id !== currentTicketId);
+    const id = currentTicketId;
+    deletePhotosDB(id);
+    deleteFromFirebase(id);
+    tickets = tickets.filter(x => x.id !== id);
     save();
     closeModalDirect();
     renderList();
