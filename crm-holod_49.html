@@ -619,37 +619,38 @@ function loadAllPhotos() {
     req.onsuccess = () => res(req.result || []);
   });
 }
-function saveDefectActs(ticketId, acts) {
-  if (!db) return;
-  return new Promise(res => {
-    const tx = db.transaction('photos', 'readwrite');
-    tx.objectStore('photos').put({ ticketId: ticketId + '_defect', photos: acts });
-    tx.oncomplete = res;
-  });
-}
-
-function loadDefectActs(ticketId) {
-  if (!db) return Promise.resolve([]);
-  return new Promise(res => {
-    const tx = db.transaction('photos', 'readonly');
-    const req = tx.objectStore('photos').get(ticketId + '_defect');
-    req.onsuccess = () => res(req.result ? req.result.photos : []);
-  });
+function deletePhotosDB(ticketId) {
+  const tx = db.transaction('photos', 'readwrite');
+  tx.objectStore('photos').delete(ticketId);
 }
 
 function save() {
-  // Save to localStorage as backup
-  const slim = tickets.map(t => { const {photos,...rest} = t; return rest; });
-  localStorage.setItem('crm_veladis', JSON.stringify(slim));
-  // Save to Firebase
+  try {
+    // Save minimal data to localStorage — only last 100 tickets, no photos, no defectActs
+    const slim = tickets.slice(0, 100).map(t => ({
+      id: t.id, type: t.type, status: t.status, priority: t.priority,
+      shopIdx: t.shopIdx, shopName: t.shopName, shopAddress: t.shopAddress,
+      equip: t.equip, desc: t.desc, date: t.date, time: t.time,
+      contact: t.contact, pinned: t.pinned, costPrice: t.costPrice,
+      services: t.services || [], parts: t.parts || [],
+      history: (t.history || []).slice(-10), // only last 10 history items
+    }));
+    try {
+      localStorage.setItem('crm_veladis', JSON.stringify(slim));
+    } catch(e) {
+      // localStorage full — clear and try again with less data
+      localStorage.removeItem('crm_veladis');
+      localStorage.setItem('crm_veladis', JSON.stringify(slim.slice(0, 30)));
+    }
+  } catch(e) {}
   saveToFirebase();
 }
 
 async function saveToFirebase() {
   try {
-    // Save each ticket individually by ID — fast regardless of total count
     const savePromises = tickets.map(t => {
-      const { photos, ...slim } = t;
+      // Don't save photos or defectActs to Firebase — they're in IndexedDB
+      const { photos, defectActs, defectAct, ...slim } = t;
       return fetch(FIREBASE_URL + '/tickets/' + t.id + '.json', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -670,9 +671,7 @@ async function saveOneToFirebase(ticket) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(slim)
     });
-  } catch(e) {
-    console.log('Firebase save error:', e);
-  }
+  } catch(e) {}
 }
 
 async function deleteFromFirebase(id) {
@@ -687,14 +686,7 @@ async function loadFromFirebase() {
     const data = await res.json();
     if (!data) return;
 
-    // Support both old array format and new object format
-    let arr = [];
-    if (Array.isArray(data)) {
-      arr = data; // old format
-    } else if (typeof data === 'object') {
-      arr = Object.values(data); // new format
-    }
-
+    let arr = Array.isArray(data) ? data : Object.values(data);
     if (arr.length === 0) return;
 
     const allPhotos = await loadAllPhotos();
@@ -1072,19 +1064,6 @@ function loadEquipForShop() {
 }
 
 // ── CREATE TICKET ──────────────────────────────────────────────────────
-const TG_BOT = '8984365760:AAHNMefS9Z-b3nKr1GsWpIBfQtWxLEb8Dmg';
-const TG_CHATS = ['399419960', '1293322309'];
-
-function sendTelegram(text) {
-  TG_CHATS.forEach(chatId => {
-    fetch('https://api.telegram.org/bot' + TG_BOT + '/sendMessage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
-    }).catch(() => {});
-  });
-}
-
 function createTicket() {
   const shopIdx = document.getElementById('f-shop').value;
   const type = document.getElementById('f-type').value;
@@ -1115,18 +1094,8 @@ function createTicket() {
   };
   tickets.unshift(ticket);
   save(); updateHeader();
-  saveToFirebase();
-
-  const pIcon = ticket.priority==='high'?'🔴':ticket.priority==='medium'?'🟡':'🟢';
-  sendTelegram(
-    `🔔 *Нова заявка Veladis*\n` +
-    `📋 ${ticket.id} — ${ticket.type}\n` +
-    `🏪 ${ticket.shopName}\n` +
-    `⚙️ ${ticket.equip || '—'}\n` +
-    `${pIcon} Пріоритет: ${ticket.priority==='high'?'Високий':ticket.priority==='medium'?'Середній':'Низький'}\n` +
-    `📝 ${ticket.desc || '—'}\n` +
-    `📅 ${ticket.date} · 🕐 ${ticket.time}`
-  );
+  // Sync to Google Sheets
+  sendToSheets(ticket);
 
   ['f-type','f-desc','f-contact'].forEach(id => document.getElementById(id).value='');
   document.getElementById('f-priority').value='medium';
@@ -1276,23 +1245,12 @@ function updateHeader() {
 
 // ── OPEN TICKET MODAL ──────────────────────────────────────────────────
 function openTicket(id) {
-  const t = tickets.find(x=>x.id===id);
-  if(!t) { alert('Заявку не знайдено: ' + id + '\nВсього заявок: ' + tickets.length); return; }
+  const t = tickets.find(x=>x.id===id); if(!t) return;
   t.parts = t.parts || [];
   t.services = t.services || [];
   t.history = t.history || [];
   t.photos = t.photos || [];
   t.defectActs = Array.isArray(t.defectActs) ? t.defectActs : (t.defectAct ? [t.defectAct] : []);
-
-  // Load defect acts from IndexedDB if empty
-  if (!t.defectActs.length) {
-    loadDefectActs(t.id).then(acts => {
-      if (acts.length) {
-        t.defectActs = acts;
-        renderDefectAct(t);
-      }
-    });
-  }
   currentTicketId = id;
   document.getElementById('modal-title').textContent = `${t.id} — ${t.type}`;
 
@@ -1862,7 +1820,6 @@ function renderDefectAct(t) {
       if (!t || !Array.isArray(t.defectActs)) return;
       t.defectActs.splice(idx, 1);
       save();
-      saveDefectActs(t.id, t.defectActs);
       saveToFirebase();
       renderDefectAct(t);
     });
@@ -1899,7 +1856,6 @@ function addDefectAct(event) {
         processed++;
         if (processed === files.length) {
           save();
-          saveDefectActs(t.id, t.defectActs);
           saveToFirebase();
           renderDefectAct(t);
           event.target.value = '';
@@ -3583,6 +3539,15 @@ function handleModalClick(e) {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────
+// ── STARTUP: Clean old localStorage if too large ─────────────────
+try {
+  const lsSize = new Blob([localStorage.getItem('crm_veladis') || '']).size;
+  if (lsSize > 3 * 1024 * 1024) { // > 3MB — clear it
+    localStorage.removeItem('crm_veladis');
+    console.log('localStorage cleared — too large:', lsSize);
+  }
+} catch(e) {}
+
 initInvCounters();
 
 // Show loading state immediately
