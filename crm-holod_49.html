@@ -198,6 +198,7 @@
               <option value="4">Бірюкова 2А, Буча</option>
               <option value="5">Нижній Вал 11, Київ</option>
               <option value="7">Драгоманова 19, Київ</option>
+              <option value="8">Борщагівська 154, Київ</option>
             </optgroup>
             <optgroup label="🟧 МХП">
               <option value="6">Центральний офіс, Київ</option>
@@ -416,7 +417,8 @@ const SHOPS = [
   { name: 'Veladis — Бірюкова 2А', address: 'м. Буча, бульв. Леоніда Бірюкова 2А', price: '8 500 грн/ТО' },
   { name: 'Veladis — Нижній Вал 11', address: 'м. Київ, Нижній Вал 11', price: '6 000 грн/ТО' },
   { name: 'МХП — Центральний офіс', address: 'м. Київ, вул. Академіка Заболотного, 158', price: '8 800 грн/місяць' },
-  { name: 'Veladis — Драгоманова 19', address: 'м. Київ, вул. Драгоманова 19', price: '' },
+  { name: 'Veladis — Драгоманова 19', address: 'м. Київ, вул. Драгоманова 19', price: '7 400 грн/ТО' },
+  { name: 'Veladis — Борщагівська 154', address: 'м. Київ, вул. Борщагівська 154', price: '6 800 грн/ТО' },
 ];
 
 const EQUIPMENT = [
@@ -571,10 +573,46 @@ const EQUIPMENT = [
   ],
   // Veladis — Драгоманова 19
   [
-    {inv:'A41362', name:'Стіл 1400x700x850 мм, Tehma, холодильний', type:'cold'},
+    {inv:'A41364', name:'Стіл Forcar G-PS200 піцерійний, 900x700x1010', type:'cold'},
+    {inv:'A41365', name:'Стіл Forcar G-PS200 піцерійний, 900x700x1010', type:'cold'},
+    {inv:'A41377', name:'Стіл 1500x600x850, н/ж, холодильний з прист. бортом', type:'cold'},
     {inv:'A41363', name:'Стіл 1400x700x850 мм, Tehma, холодильний саладетта з кришкою', type:'cold'},
+    {inv:'A41373', name:'Льодогенератор Brema G510AHC', type:'cold'},
+    {inv:'A41360', name:'Вітрина 3200x1200x1000 "Риба на льоду" нейтральна, AISI 201/304, спарена', type:'cold'},
     {inv:'A41366', name:'Стіл REEDNEE S901, 900x700x860, холодильний', type:'cold'},
+    {inv:'A41362', name:'Стіл 1400x700x850 мм, Tehma, холодильний', type:'cold'},
     {inv:'A41368', name:'Шафа Forcold G-GN650TN-FC, холодильний, відкриття праве', type:'cold'},
+    {inv:'ДР19-10', name:'Вітрина Missouri AC 120 deli PS.130-SBA-187', type:'cold'},
+    {inv:'ДР19-11', name:'Камера 3700x3100x2600 мм, -5...+5°C, холодильна', type:'cold'},
+    {inv:'ДР19-12', name:'Камера 4500x4500x2600 мм, -18...-22°C, морозильна', type:'freeze'},
+    {inv:'ДР19-13', name:'Вітрина Missouri AC 120 deli PS.130-SBA-187', type:'cold'},
+    {inv:'ДР19-14', name:'Вітрина AURA Slim 2,5', type:'cold'},
+    {inv:'ДР19-15', name:'Скриня M800S "Juka", морозильний, корона сіра/корпус RAL7016', type:'freeze'},
+    {inv:'ДР19-16', name:'Скриня M800S "Juka", морозильний, корона сіра/корпус RAL7016', type:'freeze'},
+    {inv:'ДР19-17', name:'Скриня M800S "Juka", морозильний, корона сіра/корпус RAL7016', type:'freeze'},
+  ],
+  // Veladis — Борщагівська 154
+  [
+    {inv:'A41446', name:'Вітрина 2600x1200x1000 "Риба на льоду", ванна AISI 304, каркас AISI 201', type:'cold'},
+    {inv:'A41433', name:'Вітрина Indiana medium AV.070.MT.D.210-DLA-250, холодильна гірка-регал', type:'cold'},
+    {inv:'A41434', name:'Вітрина Missouri AC120 deli PS.130-SBA-125, права боковина, спарена', type:'cold'},
+    {inv:'A41435', name:'Вітрина Missouri AC120 deli PS.130-SBA-125, права боковина, спарена', type:'cold'},
+    {inv:'A41436', name:'Вітрина Missouri AC120 deli PS.130-SBA-187, ліва боковина, спарена', type:'cold'},
+    {inv:'A41437', name:'Вітрина Missouri AC120 deli PS.130-SBA-187, ліва боковина, спарена', type:'cold'},
+    {inv:'A41422', name:'Льодогенератор Brema G510AHC', type:'cold'},
+    {inv:'A41423', name:'Моноблок TR1M10E (0...+5)', type:'cold'},
+    {inv:'A41424', name:'Моноблок TRL8E (-15...-20°C)', type:'freeze'},
+    {inv:'A41424-2', name:'Скриня M800S "Juka", морозильний', type:'freeze'},
+    {inv:'A41413', name:'Скриня M800S "Juka", морозильний', type:'freeze'},
+    {inv:'A41414', name:'Скриня M800S "Juka", морозильний', type:'freeze'},
+    {inv:'A41415', name:'Скриня M800S "Juka", морозильний', type:'freeze'},
+    {inv:'A41448', name:'Стіл 1400x700x850 мм, Tehma, холодильний', type:'cold'},
+    {inv:'A41449', name:'Стіл 1400x700x850 мм, Tehma, холодильний саладетта з кришкою', type:'cold'},
+    {inv:'A41427', name:'Стіл Forcar G-PS200 піцерійний, 900x700x1010', type:'cold'},
+    {inv:'A41428', name:'Стіл Forcar G-PS200 піцерійний, 900x700x1010', type:'cold'},
+    {inv:'A41429', name:'Стіл REEDNEE S901, 900x700x860, холодильний', type:'cold'},
+    {inv:'A41431', name:'Шафа Tecnodom AF14PKMTN, 2 глухі двері, холодильна', type:'cold'},
+    {inv:'A41432', name:'Шафа Tecnodom AF14PKMTN, 2 глухі двері, холодильна', type:'cold'},
   ],
 ];
 
